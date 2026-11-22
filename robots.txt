@@ -1,2 +1,3 @@
 User-agent: *
 Allow: /
+Sitemap: https://launfocus-sudo.github.io/Focus-chat/sitemap.xml
