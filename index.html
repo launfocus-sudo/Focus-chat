@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOCUS CHAT° - Chat cifrado en tu computador</title>
+<meta name="description" content="FOCUS CHAT° en el computador: vincula tu telefono con un codigo QR y usa tus chats cifrados de extremo a extremo desde el navegador.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#e6e2d9">
+<meta property="og:type" content="website">
+<meta property="og:title" content="FOCUS CHAT° - Chat cifrado en tu computador">
+<meta property="og:description" content="Vincula tu telefono con un codigo QR y usa FOCUS CHAT° desde el navegador. Cifrado de extremo a extremo.">
+<style>
+  :root{
+    --bg:#e6e2d9; --accent:#b98a73; --text:#3a332a; --muted:#8d857a; --card:#eeeae1; --mine:#d8c3b5; --line:#d3cdc1;
+    --sh-d:#c4beb2; --sh-l:#f6f3ec;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; }
+  body{ background:var(--bg); color:var(--text); font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; overflow:hidden; }
+  button{ font:inherit; color:inherit; cursor:pointer; }
+  .hidden{ display:none !important; }
+  .brand{ letter-spacing:.42em; font-weight:300; color:var(--accent); text-transform:uppercase; }
+
+  /* ---------- pantalla del QR ---------- */
+  #login{ height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; overflow:auto; }
+  .seo{ max-width:640px; text-align:center; color:var(--muted); font-size:13px; margin:22px 0 0; }
+  .login-card{ display:flex; gap:48px; align-items:center; background:var(--card); border-radius:28px; padding:44px 52px; max-width:880px;
+    box-shadow:10px 10px 28px var(--sh-d), -10px -10px 28px var(--sh-l); }
+  .login-card h1{ margin:0 0 6px; font-size:26px; font-weight:500; }
+  .login-card ol{ padding-left:20px; margin:18px 0 0; color:var(--muted); }
+  .login-card li{ margin:10px 0; } .login-card li b{ color:var(--text); font-weight:600; }
+  .qr-box{ background:#fff; border-radius:18px; padding:14px; width:292px; height:292px; display:flex; align-items:center; justify-content:center; flex:none; position:relative; }
+  .qr-box canvas{ width:264px; height:264px; image-rendering:pixelated; }
+  .qr-note{ margin-top:16px; font-size:13px; color:var(--muted); }
+  #loginErr{ color:#b4483a; margin-top:10px; font-size:13px; }
+  @media (max-width:760px){ .login-card{ flex-direction:column; gap:26px; padding:28px; } }
+
+  /* ---------- aplicacion ---------- */
+  #app{ height:100%; display:flex; }
+  .side{ width:360px; max-width:42vw; display:flex; flex-direction:column; border-right:1px solid var(--line); background:var(--bg); }
+  .side-head{ display:flex; align-items:center; gap:12px; padding:16px 16px 10px; }
+  .side-head .brand{ flex:1; font-size:15px; }
+  .iconbtn{ width:38px; height:38px; border-radius:50%; border:0; background:var(--card); box-shadow:3px 3px 8px var(--sh-d), -3px -3px 8px var(--sh-l);
+    display:inline-flex; align-items:center; justify-content:center; color:var(--text); flex:none; }
+  .iconbtn:active{ box-shadow:inset 2px 2px 6px var(--sh-d), inset -2px -2px 6px var(--sh-l); }
+  .iconbtn svg{ width:19px; height:19px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+  .search{ margin:6px 16px 12px; }
+  .search input{ width:100%; border:0; outline:0; border-radius:20px; padding:11px 16px; background:var(--bg); color:var(--text);
+    box-shadow:inset 3px 3px 7px var(--sh-d), inset -3px -3px 7px var(--sh-l); font:inherit; }
+  #list{ flex:1; overflow:auto; padding:2px 10px 12px; }
+  .row{ display:flex; gap:12px; align-items:center; padding:10px 10px; border-radius:16px; cursor:pointer; margin-bottom:4px; }
+  .row:hover{ background:var(--card); }
+  .row.sel{ background:var(--card); box-shadow:inset 2px 2px 6px var(--sh-d), inset -2px -2px 6px var(--sh-l); }
+  .av{ width:46px; height:46px; border-radius:50%; flex:none; background:var(--card); color:var(--accent); display:flex; align-items:center; justify-content:center;
+    font-weight:600; font-size:18px; overflow:hidden; box-shadow:2px 2px 6px var(--sh-d), -2px -2px 6px var(--sh-l); }
+  .av img{ width:100%; height:100%; object-fit:cover; }
+  .row-mid{ flex:1; min-width:0; }
+  .row-top{ display:flex; gap:8px; align-items:baseline; }
+  .row-name{ flex:1; min-width:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row-time{ font-size:12px; color:var(--muted); flex:none; }
+  .row-last{ color:var(--muted); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .badge{ background:var(--accent); color:var(--bg); border-radius:11px; min-width:21px; height:21px; font-size:12px; display:inline-flex; align-items:center; justify-content:center; padding:0 6px; margin-left:6px; flex:none; }
+  .arch-toggle{ text-align:center; padding:10px; color:var(--muted); font-size:13px; cursor:pointer; }
+
+  .main{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .empty{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--muted); gap:8px; text-align:center; padding:30px; }
+  .empty .brand{ font-size:22px; }
+  .conv-head{ display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid var(--line); }
+  .conv-head .nm{ font-weight:600; font-size:16px; }
+  .conv-head .sub{ font-size:12px; color:var(--muted); }
+  #msgs{ flex:1; overflow:auto; padding:18px 8% 10px; display:flex; flex-direction:column; gap:6px; }
+  .day{ align-self:center; background:var(--card); color:var(--muted); font-size:12px; border-radius:12px; padding:3px 12px; margin:10px 0 4px; }
+  .more{ align-self:center; border:0; background:var(--card); color:var(--muted); border-radius:14px; padding:6px 16px; font-size:13px; margin-bottom:6px;
+    box-shadow:2px 2px 6px var(--sh-d), -2px -2px 6px var(--sh-l); }
+  .b{ max-width:min(560px,78%); padding:8px 12px 6px; border-radius:16px; background:var(--card); position:relative; word-wrap:break-word; overflow-wrap:anywhere;
+    box-shadow:3px 3px 8px var(--sh-d), -2px -2px 6px var(--sh-l); }
+  .b.me{ align-self:flex-end; background:var(--mine); border-bottom-right-radius:5px; }
+  .b.them{ align-self:flex-start; border-bottom-left-radius:5px; }
+  .b .who{ font-size:12px; font-weight:600; color:var(--accent); margin-bottom:2px; }
+  .b .txt{ white-space:pre-wrap; }
+  .b a{ color:inherit; text-decoration:underline; }
+  .b .meta{ font-size:11px; color:var(--muted); text-align:right; margin-top:2px; user-select:none; }
+  .b.fail .meta{ color:#b4483a; }
+  .card{ display:flex; gap:10px; align-items:center; background:rgba(0,0,0,.05); border-radius:12px; padding:9px 12px; cursor:pointer; min-width:210px; }
+  .card .ic{ font-size:22px; } .card .nm{ font-weight:600; font-size:14px; word-break:break-all; } .card .sz{ font-size:12px; color:var(--muted); }
+  .b img.pic, .b video{ max-width:100%; max-height:340px; border-radius:12px; display:block; }
+  .b audio{ width:260px; max-width:100%; }
+  .dl{ display:inline-block; margin-top:6px; font-size:13px; }
+  .composer{ display:flex; gap:10px; align-items:flex-end; padding:12px 20px 16px; border-top:1px solid var(--line); }
+  .composer textarea{ flex:1; resize:none; max-height:140px; border:0; outline:0; border-radius:20px; padding:12px 16px; background:var(--bg); color:var(--text); font:inherit;
+    box-shadow:inset 3px 3px 7px var(--sh-d), inset -3px -3px 7px var(--sh-l); }
+  #banner{ background:var(--accent); color:var(--bg); text-align:center; font-size:13px; padding:6px 10px; }
+  #toast{ position:fixed; left:50%; bottom:28px; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:9px 18px; border-radius:20px; font-size:13.5px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:9; }
+  #toast.on{ opacity:.95; }
+  @media (max-width:760px){ .side{ width:100%; max-width:none; } .main{ display:none; } body.conv .side{ display:none; } body.conv .main{ display:flex; } #msgs{ padding:14px 12px 8px; } }
+  .back{ display:none; } @media (max-width:760px){ .back{ display:inline-flex; } }
+</style>
+</head>
+<body>
+
+<div id="login" class="hidden">
+  <div class="login-card">
+    <div>
+      <div class="brand" style="font-size:15px; margin-bottom:22px;">FOCUS CHAT°</div>
+      <h1>Usa FOCUS CHAT en tu computador</h1>
+      <ol>
+        <li>Abre <b>FOCUS CHAT</b> en tu telefono.</li>
+        <li>Entra a <b>Ajustes &rsaquo; Dispositivos vinculados</b>.</li>
+        <li>Toca <b>Vincular un dispositivo</b> y apunta la camara a este codigo.</li>
+      </ol>
+      <div class="qr-note">Tus mensajes siguen cifrados de extremo a extremo. El telefono debe tener FOCUS CHAT abierto y con internet.</div>
+      <div id="loginErr"></div>
+    </div>
+    <div class="qr-box"><canvas id="qr" width="10" height="10"></canvas></div>
+  </div>
+  <p class="seo"><b>FOCUS CHAT°</b> es un chat con cifrado de extremo a extremo. Esta es su version web: vincula tu telefono escaneando el codigo QR y usa tus conversaciones desde el navegador de tu computador, sin instalar nada.</p>
+  <noscript><p class="seo">Para usar FOCUS CHAT° en el computador activa JavaScript en tu navegador.</p></noscript>
+</div>
+
+<div id="app" class="hidden">
+  <div class="side">
+    <div class="side-head">
+      <div class="av" id="meAv">?</div>
+      <div class="brand">FOCUS CHAT°</div>
+      <button class="iconbtn" id="outBtn" title="Cerrar sesion" aria-label="Cerrar sesion"><svg viewBox="0 0 24 24"><path d="M9 4H5v16h4"/><polyline points="16 8 20 12 16 16"/><line x1="20" y1="12" x2="9" y2="12"/></svg></button>
+    </div>
+    <div class="search"><input id="q" type="text" placeholder="Buscar chat" autocomplete="off"></div>
+    <div id="banner" class="hidden">Sin conexion con el telefono. Abre FOCUS CHAT en el telefono.</div>
+    <div id="list"></div>
+  </div>
+  <div class="main" id="main">
+    <div class="empty" id="empty"><div class="brand">FOCUS CHAT°</div><div>Elige un chat para empezar.</div></div>
+    <div id="conv" class="hidden" style="display:none; flex:1; min-height:0; flex-direction:column;">
+      <div class="conv-head">
+        <button class="iconbtn back" id="backBtn" aria-label="Atras"><svg viewBox="0 0 24 24"><polyline points="15 5 8 12 15 19"/></svg></button>
+        <div class="av" id="cAv"></div>
+        <div><div class="nm" id="cNm"></div><div class="sub" id="cSub"></div></div>
+      </div>
+      <div id="msgs"></div>
+      <div class="composer">
+        <button class="iconbtn" id="attBtn" title="Adjuntar archivo" aria-label="Adjuntar"><svg viewBox="0 0 24 24"><path d="M20 11.5l-8 8a5 5 0 01-7-7l9-9a3.5 3.5 0 015 5l-9 9a2 2 0 01-3-3l8-8"/></svg></button>
+        <input type="file" id="file" class="hidden">
+        <textarea id="txt" rows="1" placeholder="Escribe un mensaje"></textarea>
+        <button class="iconbtn" id="sendBtn" title="Enviar" aria-label="Enviar"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script src="chat-config.js"></script>
+<script>
+/* ===== QR (sin librerias) ===== */
+/* Generador de QR minimo (modo bytes, correccion L, versiones 1 a 6: hasta 134 caracteres). Sin librerias. */
+function qrEncode(text){
+  const data = Array.from(new TextEncoder().encode(String(text)));
+  const V = [null,[19,7,1],[34,10,1],[55,15,1],[80,20,1],[108,26,1],[136,18,2]];   // [datos, ec por bloque, bloques]
+  let ver = 0;
+  for(let v = 1; v <= 6; v++){ if(data.length <= V[v][0] - 2){ ver = v; break; } }
+  if(!ver) throw new Error('QR: texto demasiado largo');
+  const total = V[ver][0], ecLen = V[ver][1], nb = V[ver][2], size = 17 + 4 * ver;
+  // --- bits de datos ---
+  const bits = [];
+  const put = function(val, n){ for(let i = n - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+  put(4, 4); put(data.length, 8); data.forEach(function(b){ put(b, 8); });
+  for(let i = 0; i < 4 && bits.length < total * 8; i++) bits.push(0);
+  while(bits.length % 8) bits.push(0);
+  const cw = [];
+  for(let i = 0; i < bits.length; i += 8){ let b = 0; for(let j = 0; j < 8; j++) b = (b << 1) | bits[i + j]; cw.push(b); }
+  for(let p = 0; cw.length < total; p++) cw.push(p % 2 ? 0x11 : 0xEC);
+  // --- Reed-Solomon en GF(256) ---
+  const exp = new Array(512), log = new Array(256);
+  for(let i = 0, x = 1; i < 255; i++){ exp[i] = x; log[x] = i; x <<= 1; if(x & 256) x ^= 0x11D; }
+  for(let i = 255; i < 512; i++) exp[i] = exp[i - 255];
+  const gmul = function(a, b){ return (a && b) ? exp[log[a] + log[b]] : 0; };
+  let gen = [1];
+  for(let i = 0; i < ecLen; i++){
+    const nx = new Array(gen.length + 1).fill(0);
+    for(let j = 0; j < gen.length; j++){ nx[j] ^= gen[j]; nx[j + 1] ^= gmul(gen[j], exp[i]); }
+    gen = nx;
+  }
+  const per = total / nb, blocks = [], ecs = [];
+  for(let b = 0; b < nb; b++){
+    const d = cw.slice(b * per, (b + 1) * per), r = d.concat(new Array(ecLen).fill(0));
+    for(let i = 0; i < d.length; i++){ const f = r[i]; if(f) for(let j = 0; j < gen.length; j++) r[i + j] ^= gmul(gen[j], f); }
+    blocks.push(d); ecs.push(r.slice(d.length));
+  }
+  const fin = [];
+  for(let i = 0; i < per; i++) for(let b = 0; b < nb; b++) fin.push(blocks[b][i]);
+  for(let i = 0; i < ecLen; i++) for(let b = 0; b < nb; b++) fin.push(ecs[b][i]);
+  // --- matriz ---
+  const mod = [], fn = [];
+  for(let y = 0; y < size; y++){ mod.push(new Array(size).fill(false)); fn.push(new Array(size).fill(false)); }
+  const setF = function(x, y, d){ if(x >= 0 && y >= 0 && x < size && y < size){ mod[y][x] = d; fn[y][x] = true; } };
+  for(let i = 0; i < size; i++){ setF(6, i, i % 2 === 0); setF(i, 6, i % 2 === 0); }
+  [[3, 3], [size - 4, 3], [3, size - 4]].forEach(function(c){
+    for(let dy = -4; dy <= 4; dy++) for(let dx = -4; dx <= 4; dx++){
+      const d = Math.max(Math.abs(dx), Math.abs(dy)); setF(c[0] + dx, c[1] + dy, d !== 2 && d !== 4);
+    }
+  });
+  if(ver >= 2){
+    const c = size - 7;
+    for(let dy = -2; dy <= 2; dy++) for(let dx = -2; dx <= 2; dx++) setF(c + dx, c + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+  }
+  const fmt = function(mask){
+    const d = (1 << 3) | mask; let r = d;
+    for(let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537);
+    const bs = ((d << 10) | r) ^ 0x5412, g = function(i){ return ((bs >>> i) & 1) === 1; };
+    for(let i = 0; i <= 5; i++) setF(8, i, g(i));
+    setF(8, 7, g(6)); setF(8, 8, g(7)); setF(7, 8, g(8));
+    for(let i = 9; i < 15; i++) setF(14 - i, 8, g(i));
+    for(let i = 0; i < 8; i++) setF(size - 1 - i, 8, g(i));
+    for(let i = 8; i < 15; i++) setF(8, size - 15 + i, g(i));
+    setF(8, size - 8, true);
+  };
+  fmt(0);   // reserva las zonas de formato antes de colocar los datos
+  let k = 0;
+  for(let right = size - 1; right >= 1; right -= 2){
+    if(right === 6) right = 5;
+    for(let vert = 0; vert < size; vert++){
+      for(let j = 0; j < 2; j++){
+        const x = right - j, up = ((right + 1) & 2) === 0, y = up ? size - 1 - vert : vert;
+        if(!fn[y][x] && k < fin.length * 8){ mod[y][x] = ((fin[k >>> 3] >>> (7 - (k & 7))) & 1) === 1; k++; }
+      }
+    }
+  }
+  const MASK = [
+    function(x, y){ return (x + y) % 2 === 0; }, function(x, y){ return y % 2 === 0; },
+    function(x, y){ return x % 3 === 0; }, function(x, y){ return (x + y) % 3 === 0; },
+    function(x, y){ return (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0; },
+    function(x, y){ return (x * y) % 2 + (x * y) % 3 === 0; },
+    function(x, y){ return ((x * y) % 2 + (x * y) % 3) % 2 === 0; },
+    function(x, y){ return ((x + y) % 2 + (x * y) % 3) % 2 === 0; }
+  ];
+  const penalty = function(m){
+    let p = 0, dark = 0;
+    for(let y = 0; y < size; y++){
+      for(let pass = 0; pass < 2; pass++){
+        let run = 1;
+        for(let i = 1; i < size; i++){
+          const a = pass ? m[i][y] : m[y][i], b = pass ? m[i - 1][y] : m[y][i - 1];
+          if(a === b){ run++; if(run === 5) p += 3; else if(run > 5) p++; } else run = 1;
+        }
+      }
+      for(let x = 0; x < size; x++){
+        if(m[y][x]) dark++;
+        if(x < size - 1 && y < size - 1 && m[y][x] === m[y][x + 1] && m[y][x] === m[y + 1][x] && m[y][x] === m[y + 1][x + 1]) p += 3;
+      }
+    }
+    const P1 = [1,0,1,1,1,0,1,0,0,0,0], P2 = [0,0,0,0,1,0,1,1,1,0,1];
+    for(let y = 0; y < size; y++) for(let x = 0; x + 11 <= size; x++){
+      for(let pass = 0; pass < 2; pass++){
+        let m1 = true, m2 = true;
+        for(let i = 0; i < 11; i++){
+          const v = (pass ? m[x + i][y] : m[y][x + i]) ? 1 : 0;
+          if(v !== P1[i]) m1 = false; if(v !== P2[i]) m2 = false;
+        }
+        if(m1) p += 40; if(m2) p += 40;
+      }
+    }
+    p += Math.floor(Math.abs(dark * 20 - size * size * 10) / (size * size)) * 10;
+    return p;
+  };
+  let best = null, bestP = 1e9, bestM = 0;
+  for(let mk = 0; mk < 8; mk++){
+    const m = mod.map(function(r){ return r.slice(); });
+    for(let y = 0; y < size; y++) for(let x = 0; x < size; x++) if(!fn[y][x] && MASK[mk](x, y)) m[y][x] = !m[y][x];
+    const pen = penalty(m);
+    if(pen < bestP){ bestP = pen; best = m; bestM = mk; }
+  }
+  for(let y = 0; y < size; y++) for(let x = 0; x < size; x++) mod[y][x] = best[y][x];
+  fmt(bestM);
+  for(let y = 0; y < size; y++) for(let x = 0; x < size; x++) if(fn[y][x]) { /* ya queda en mod */ }
+  return { size: size, get: function(x, y){ return mod[y][x]; } };
+}
+
+</script>
+<script>
+(function(){
+'use strict';
+const CFG = window.FOCUS_CHAT_CONFIG || {};
+const $ = function(id){ return document.getElementById(id); };
+const esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+const SUB = crypto.subtle, LK_INFO = 'focus-link-v1', MAXF = 24 * 1024 * 1024;
+const SKEY = 'fcweb.session';
+
+/* ---------- utilidades ---------- */
+function b64e(buf){ const b = buf instanceof Uint8Array ? buf : new Uint8Array(buf); let s = ''; for(let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+function b64d(str){ const s = atob(str), b = new Uint8Array(s.length); for(let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
+function rnd(n){ return crypto.getRandomValues(new Uint8Array(n)); }
+function hex(n){ return Array.prototype.map.call(rnd(n), function(x){ return (x < 16 ? '0' : '') + x.toString(16); }).join(''); }
+function toast(t){ const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function(){ e.classList.remove('on'); }, 2600); }
+function hdr(extra){ const h = { apikey: CFG.key }; if(/^eyJ/.test(CFG.key)) h.Authorization = 'Bearer ' + CFG.key; if(extra) for(const k in extra) h[k] = extra[k]; return h; }
+async function rpc(fn, args){
+  const r = await fetch(CFG.url + '/rest/v1/rpc/' + fn, { method: 'POST', headers: hdr({ 'Content-Type': 'application/json' }), body: JSON.stringify(args) });
+  if(!r.ok){ let m = ''; try{ const j = await r.json(); m = j.message || ''; }catch(e){} throw new Error(m || ('http ' + r.status)); }
+  const t = await r.text(); return t ? JSON.parse(t) : null;
+}
+async function derive(priv, pub){
+  const p = await SUB.importKey('jwk', { kty: 'EC', crv: 'P-256', x: pub.x, y: pub.y, ext: true }, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
+  const bits = await SUB.deriveBits({ name: 'ECDH', public: p }, priv, 256);
+  const hk = await SUB.importKey('raw', bits, 'HKDF', false, ['deriveKey']);
+  return SUB.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: new TextEncoder().encode(LK_INFO) }, hk, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+}
+async function seal(key, obj){ const iv = rnd(12); const ct = await SUB.encrypt({ name: 'AES-GCM', iv: iv }, key, new TextEncoder().encode(JSON.stringify(obj))); return b64e(iv) + '.' + b64e(new Uint8Array(ct)); }
+async function open(key, str){ const p = String(str).split('.'); if(p.length !== 2) throw new Error('formato'); const pt = await SUB.decrypt({ name: 'AES-GCM', iv: b64d(p[0]) }, key, b64d(p[1])); return JSON.parse(new TextDecoder().decode(pt)); }
+function mix(a, b, t){
+  const p = function(h){ return [1, 3, 5].map(function(i){ return parseInt(h.substr(i, 2), 16); }); }, x = p(a), y = p(b);
+  return '#' + [0, 1, 2].map(function(i){ return ('0' + Math.round(x[i] + (y[i] - x[i]) * t).toString(16)).slice(-2); }).join('');
+}
+function applyTheme(t){
+  if(!t || !/^#[0-9a-f]{6}$/i.test(t.bg || '') || !/^#[0-9a-f]{6}$/i.test(t.accent || '')) return;
+  const r = document.documentElement.style, dark = !!t.dark, text = /^#[0-9a-f]{6}$/i.test(t.text || '') ? t.text : (dark ? '#ece6d8' : '#3a332a');
+  r.setProperty('--bg', t.bg); r.setProperty('--accent', t.accent); r.setProperty('--text', text);
+  r.setProperty('--muted', mix(t.bg, text, 0.55));
+  r.setProperty('--card', dark ? mix(t.bg, '#ffffff', 0.06) : mix(t.bg, '#ffffff', 0.35));
+  r.setProperty('--mine', mix(t.bg, t.accent, dark ? 0.38 : 0.34));
+  r.setProperty('--line', mix(t.bg, text, 0.14));
+  r.setProperty('--sh-d', dark ? mix(t.bg, '#000000', 0.5) : mix(t.bg, '#000000', 0.16));
+  r.setProperty('--sh-l', dark ? mix(t.bg, '#ffffff', 0.07) : mix(t.bg, '#ffffff', 0.6));
+  try{ localStorage.setItem('fcweb.theme', JSON.stringify(t)); }catch(e){}
+}
+try{ applyTheme(JSON.parse(localStorage.getItem('fcweb.theme') || 'null')); }catch(e){}
+function devName(){
+  const u = navigator.userAgent;
+  const br = /Edg\//.test(u) ? 'Microsoft Edge' : /OPR\//.test(u) ? 'Opera' : /Firefox\//.test(u) ? 'Firefox' : /Chrome\//.test(u) ? 'Google Chrome' : /Safari\//.test(u) ? 'Safari' : 'Navegador';
+  const os = /Windows/.test(u) ? 'Windows' : /Mac OS/.test(u) ? 'Mac' : /Linux/.test(u) ? 'Linux' : '';
+  return br + (os ? ' (' + os + ')' : '');
+}
+
+/* ---------- QR en pantalla ---------- */
+function drawQR(canvas, text){
+  const q = qrEncode(text), quiet = 2, n = q.size + quiet * 2, sc = 8;
+  canvas.width = canvas.height = n * sc;
+  const g = canvas.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, canvas.width, canvas.height); g.fillStyle = '#111';
+  for(let y = 0; y < q.size; y++) for(let x = 0; x < q.size; x++) if(q.get(x, y)) g.fillRect((x + quiet) * sc, (y + quiet) * sc, sc, sc);
+}
+
+/* ---------- estado ---------- */
+const S = { sid: '', key: null, ack: 0, chats: {}, me: { name: '', photo: '' }, open: '', lastPhone: 0, ready: false, media: {}, reqs: {}, showArch: false, q: '' };
+let pair = null, loopT = 0, pingT = 0;
+
+function saveSess(){ try{ localStorage.setItem(SKEY, JSON.stringify({ sid: S.sid, k: S.k, ack: S.ack })); }catch(e){} }
+
+/* ---------- vincular (mostrar QR y esperar al telefono) ---------- */
+async function newPair(){
+  if(pair) rpc('fc_link_close', { p_sid: pair.sid }).catch(function(){});
+  const kp = await SUB.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+  const jwk = await SUB.exportKey('jwk', kp.publicKey), sid = hex(10);
+  pair = { sid: sid, priv: kp.privateKey, ack: 0, t0: Date.now() };
+  drawQR($('qr'), 'FCL1.' + sid + '.' + jwk.x + '.' + jwk.y);
+}
+async function pairLoop(){
+  if(!pair) return;
+  try{
+    if(Date.now() - pair.t0 > 100000) await newPair();           // el codigo se renueva solo
+    const rows = await rpc('fc_link_pull', { p_sid: pair.sid, p_dir: 'p', p_ack: pair.ack });
+    for(let i = 0; i < (rows || []).length; i++){
+      pair.ack = Math.max(pair.ack, Number(rows[i].id));
+      const p = String(rows[i].body).split('.');
+      if(p[0] !== 'h' || p.length !== 5) continue;
+      try{
+        const key = await derive(pair.priv, { x: p[1], y: p[2] });
+        const o = await open(key, p[3] + '.' + p[4]);
+        if(o && o.t === 'hello'){
+          S.sid = pair.sid; S.k = b64e(new Uint8Array(await SUB.exportKey('raw', key))); S.ack = pair.ack; saveSess();
+          pair = null; $('loginErr').textContent = '';
+          connect(key); return;
+        }
+      }catch(e){}
+    }
+    $('loginErr').textContent = '';
+  }catch(e){ $('loginErr').textContent = 'Sin conexion con el servidor. Reintentando...'; }
+  setTimeout(pairLoop, 1500);
+}
+async function showLogin(){
+  $('app').classList.add('hidden'); $('login').classList.remove('hidden');
+  try{ await newPair(); }catch(e){ $('loginErr').textContent = 'No se pudo generar el codigo.'; return; }
+  pairLoop();
+}
+
+/* ---------- conectado ---------- */
+async function send(o){ await rpc('fc_link_send', { p_sid: S.sid, p_dir: 'd', p_body: await seal(S.key, o) }); }
+async function connect(key){
+  S.key = key; S.chats = {}; S.ready = false; S.lastPhone = Date.now();
+  $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  renderList();
+  try{ await send({ t: 'dev', name: devName() }); await send({ t: 'sync' }); }catch(e){}
+  clearInterval(pingT); pingT = setInterval(function(){ send({ t: 'ping' }).catch(function(){}); }, 8000);
+  loop();
+}
+async function loop(){
+  clearTimeout(loopT);
+  if(!S.key) return;
+  let more = false;
+  try{
+    const rows = await rpc('fc_link_pull', { p_sid: S.sid, p_dir: 'p', p_ack: S.ack });
+    for(let i = 0; i < (rows || []).length; i++){
+      S.ack = Math.max(S.ack, Number(rows[i].id));
+      try{ const o = await open(S.key, rows[i].body); S.lastPhone = Date.now(); handle(o); }catch(e){}
+      if(!S.key) return;
+    }
+    if((rows || []).length) saveSess();
+    more = (rows || []).length >= 60;
+  }catch(e){}
+  loopT = setTimeout(loop, more ? 100 : (document.hidden ? 5000 : 1500));
+}
+setInterval(function(){ if(S.key) $('banner').classList.toggle('hidden', Date.now() - S.lastPhone < 25000); }, 3000);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && S.key) loop(); });
+
+/* ---------- mensajes del telefono ---------- */
+function chatOf(id){ return S.chats[id] || (S.chats[id] = { id: id, name: '', group: false, ts: 0, unread: 0, pinned: false, archived: false, photo: '', msgs: [], more: true }); }
+function mergeMsgs(c, ms, tmp){
+  if(tmp){ c.msgs = c.msgs.filter(function(m){ return m.id !== tmp; }); }
+  const idx = {}; c.msgs.forEach(function(m, i){ idx[m.id] = i; });
+  (ms || []).forEach(function(m){ if(idx[m.id] !== undefined) c.msgs[idx[m.id]] = m; else { idx[m.id] = c.msgs.length; c.msgs.push(m); } });
+  c.msgs.sort(function(a, b){ return (a.ts || 0) - (b.ts || 0); });
+}
+function handle(o){
+  const t = o && o.t;
+  if(t === 'ping') return;
+  if(t === 'bye'){ endSession(true); return; }
+  if(t === 'me'){ S.me = { name: o.name || '', photo: o.photo || '' }; applyTheme(o.theme); renderMe(); return; }
+  if(t === 'theme'){ applyTheme(o.theme); return; }
+  if(t === 'ready'){ S.ready = true; renderList(); return; }
+  if(t === 'chat'){
+    const c = chatOf(o.c.id), m = o.c;
+    c.name = m.name; c.group = !!m.group; c.ts = m.ts || 0; c.unread = m.unread || 0; c.pinned = !!m.pinned; c.archived = !!m.archived;
+    if(m.photo !== undefined) c.photo = m.photo;
+    if(S.open === c.id && c.unread){ c.unread = 0; send({ t: 'read', cid: c.id }).catch(function(){}); }
+    mergeMsgs(c, o.ms); renderList(); if(S.open === c.id) renderMsgs(true); updateTitle(); return;
+  }
+  if(t === 'msg'){
+    const c = chatOf(o.cid); if(o.c){ c.name = o.c.name; c.ts = o.c.ts || c.ts; }
+    mergeMsgs(c, [o.m], o.tmp); renderList(); if(S.open === c.id) renderMsgs(true); return;
+  }
+  if(t === 'st'){
+    const c = S.chats[o.cid]; if(!c) return;
+    (o.l || []).forEach(function(x){ c.msgs.forEach(function(m){ if(m.id === x.id) m.st = x.st; }); });
+    if(S.open === c.id) renderMsgs(false); return;
+  }
+  if(t === 'older'){
+    const c = S.chats[o.cid]; if(!c) return;
+    c.more = !!o.more && (o.ms || []).length > 0; mergeMsgs(c, o.ms);
+    if(S.open === c.id) renderMsgs('keep'); return;
+  }
+  if(t === 'media' || t === 'mediaerr'){ const r = S.reqs[o.req]; if(r){ delete S.reqs[o.req]; r(o); } return; }
+}
+
+/* ---------- pantalla ---------- */
+function ini(n){ return esc((String(n || '?').trim().charAt(0) || '?').toUpperCase()); }
+function avHtml(name, photo){ return photo ? '<img alt="" src="' + esc(photo) + '">' : ini(name); }
+function renderMe(){ $('meAv').innerHTML = avHtml(S.me.name, S.me.photo); $('meAv').title = S.me.name || ''; }
+function tfmt(ts){ if(!ts) return ''; const d = new Date(ts), p = function(x){ return (x < 10 ? '0' : '') + x; }; return p(d.getHours()) + ':' + p(d.getMinutes()); }
+function dayKey(ts){ const d = new Date(ts); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
+function dayLbl(ts){
+  const d = new Date(ts), n = new Date();
+  if(dayKey(ts) === dayKey(n.getTime())) return 'Hoy';
+  if(dayKey(ts) === dayKey(n.getTime() - 86400000)) return 'Ayer';
+  return d.toLocaleDateString('es', { day: 'numeric', month: 'long', year: d.getFullYear() === n.getFullYear() ? undefined : 'numeric' });
+}
+function summary(m){
+  if(!m) return '';
+  const t = m.type || 'text';
+  if(t === 'text' || t === 'sys') return m.text || '';
+  if(t === 'loc') return '\uD83D\uDCCD Ubicacion';
+  if(t === 'contact') return '\uD83D\uDC64 ' + ((m.contact && m.contact.name) || 'Contacto');
+  if(t === 'media'){ const k = m.media && m.media.kind; return k === 'image' ? '\uD83D\uDCF7 Foto' : k === 'video' ? '\uD83C\uDFA5 Video' : k === 'audio' ? '\uD83C\uDFA4 Nota de voz' : '\uD83D\uDCCE ' + ((m.media && m.media.name) || 'Archivo'); }
+  return '';
+}
+function updateTitle(){ let n = 0; Object.keys(S.chats).forEach(function(k){ n += S.chats[k].unread || 0; }); document.title = (n ? '(' + n + ') ' : '') + 'FOCUS CHAT\u00B0'; }
+function renderList(){
+  const q = S.q.trim().toLowerCase();
+  let cs = Object.keys(S.chats).map(function(k){ return S.chats[k]; });
+  cs = cs.filter(function(c){ return (S.showArch ? c.archived : !c.archived) && (!q || (c.name || '').toLowerCase().indexOf(q) >= 0); });
+  cs.sort(function(a, b){ return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (b.ts || 0) - (a.ts || 0); });
+  let h = '';
+  cs.forEach(function(c){
+    const last = c.msgs.length ? c.msgs[c.msgs.length - 1] : null;
+    h += '<div class="row' + (c.id === S.open ? ' sel' : '') + '" data-id="' + esc(c.id) + '"><div class="av">' + avHtml(c.name, c.photo) + '</div><div class="row-mid">' +
+      '<div class="row-top"><div class="row-name">' + esc(c.name) + '</div><div class="row-time">' + tfmt(c.ts) + '</div></div>' +
+      '<div style="display:flex; align-items:center;"><div class="row-last" style="flex:1;">' + esc(summary(last)) + '</div>' + (c.unread ? '<span class="badge">' + c.unread + '</span>' : '') + '</div></div></div>';
+  });
+  if(!cs.length) h = '<div class="empty" style="padding:40px 10px;">' + (S.ready ? 'No hay chats.' : 'Cargando chats desde el telefono...') + '</div>';
+  const hasArch = Object.keys(S.chats).some(function(k){ return S.chats[k].archived; });
+  if(hasArch || S.showArch) h += '<div class="arch-toggle" id="archT">' + (S.showArch ? 'Volver a los chats' : 'Archivados') + '</div>';
+  $('list').innerHTML = h; updateTitle();
+}
+function linkify(s){ return esc(s).replace(/(https?:\/\/[^\s<]+)/g, function(u){ return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>'; }); }
+function bubble(c, m){
+  const me = m.me, t = m.type || 'text', md = S.media[m.id];
+  let body = '';
+  if(c.group && !me && m.who) body += '<div class="who">' + esc(m.who) + '</div>';
+  if(t === 'loc' && m.loc && isFinite(m.loc.lat) && isFinite(m.loc.lon)){
+    const u = 'https://maps.google.com/?q=' + m.loc.lat + ',' + m.loc.lon;
+    body += '<a class="card" href="' + u + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><span class="ic">\uD83D\uDCCD</span><span><div class="nm">Ubicacion</div><div class="sz">Abrir en Google Maps</div></span></a>';
+  }else if(t === 'contact'){
+    body += '<div class="card" style="cursor:default;"><span class="ic">\uD83D\uDC64</span><span><div class="nm">' + esc((m.contact && m.contact.name) || 'Contacto') + '</div><div class="sz">Contacto</div></span></div>';
+  }else if(t === 'media' && m.media){
+    const k = m.media.kind, ic = k === 'image' ? '\uD83D\uDCF7' : k === 'video' ? '\uD83C\uDFA5' : k === 'audio' ? '\uD83C\uDFA4' : '\uD83D\uDCCE';
+    if(md && md.url){
+      if(k === 'image') body += '<a href="' + md.url + '" target="_blank"><img class="pic" alt="" src="' + md.url + '"></a>';
+      else if(k === 'video') body += '<video controls src="' + md.url + '"></video>';
+      else if(k === 'audio') body += '<audio controls src="' + md.url + '"></audio>';
+      else body += '<div class="card" style="cursor:default;"><span class="ic">' + ic + '</span><span><div class="nm">' + esc(m.media.name) + '</div></span></div>';
+      body += '<a class="dl" href="' + md.url + '" download="' + esc(m.media.name || 'archivo') + '">Descargar</a>';
+    }else{
+      const st = md && md.err ? md.err : (md && md.loading ? 'Pidiendo al telefono...' : (m.media.size ? szfmt(m.media.size) + ' \u00B7 Toca para abrir' : 'Toca para abrir'));
+      body += '<div class="card" data-media="' + esc(m.id) + '"><span class="ic">' + ic + '</span><span><div class="nm">' + esc(m.media.name || 'Archivo') + '</div><div class="sz">' + esc(st) + '</div></span></div>';
+    }
+  }else{
+    body += '<div class="txt">' + linkify(m.text || summary(m) || '') + '</div>';
+  }
+  const tick = !me ? '' : m.st === 'sending' ? ' \u00B7 \u2026' : m.st === 'fail' ? ' \u00B7 no enviado' : m.st === 'sent' ? ' \u00B7 \u2713' : '';
+  return '<div class="b ' + (me ? 'me' : 'them') + (m.st === 'fail' ? ' fail' : '') + '">' + body + '<div class="meta">' + tfmt(m.ts) + tick + '</div></div>';
+}
+function szfmt(n){ n = Number(n) || 0; return n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(0) + ' KB' : (n / 1048576).toFixed(1) + ' MB'; }
+function renderMsgs(scroll){
+  const c = S.chats[S.open]; if(!c) return;
+  const el = $('msgs'), prevH = el.scrollHeight, atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  let h = '', last = '';
+  if(c.msgs.length && c.more !== false) h += '<button class="more" id="olderBtn">Cargar mensajes anteriores</button>';
+  c.msgs.forEach(function(m){
+    const dk = dayKey(m.ts || 0);
+    if(dk !== last){ last = dk; h += '<div class="day">' + esc(dayLbl(m.ts || 0)) + '</div>'; }
+    h += bubble(c, m);
+  });
+  el.innerHTML = h;
+  if(scroll === 'keep') el.scrollTop = el.scrollHeight - prevH;
+  else if(scroll === 'force' || (scroll === true && atBottom)) el.scrollTop = el.scrollHeight;
+}
+function openChat(id){
+  const c = S.chats[id]; if(!c) return;
+  S.open = id; document.body.classList.add('conv');
+  $('empty').classList.add('hidden'); $('empty').style.display = 'none';
+  const cv = $('conv'); cv.classList.remove('hidden'); cv.style.display = 'flex';
+  $('cAv').innerHTML = avHtml(c.name, c.photo); $('cNm').textContent = c.name; $('cSub').textContent = c.group ? 'Grupo' : '';
+  if(c.unread){ c.unread = 0; send({ t: 'read', cid: id }).catch(function(){}); }
+  renderList(); renderMsgs('force'); $('txt').focus();
+}
+
+/* ---------- acciones ---------- */
+async function sendText(){
+  const c = S.chats[S.open], ta = $('txt'), text = ta.value.replace(/\s+$/, '');
+  if(!c || !text) return;
+  ta.value = ''; ta.style.height = 'auto';
+  const tmp = 'tmp' + hex(4), m = { id: tmp, me: true, type: 'text', ts: Date.now(), st: 'sending', text: text };
+  c.msgs.push(m); c.ts = m.ts; renderList(); renderMsgs('force');
+  try{ await send({ t: 'send', cid: c.id, text: text, tmp: tmp }); }
+  catch(e){ m.st = 'fail'; renderMsgs(false); return; }
+  setTimeout(function(){ if(m.st === 'sending' && c.msgs.indexOf(m) >= 0){ m.st = 'fail'; if(S.open === c.id) renderMsgs(false); } }, 40000);
+}
+async function getMedia(id){
+  const c = S.chats[S.open]; if(!c) return;
+  const m = c.msgs.filter(function(x){ return x.id === id; })[0]; if(!m || !m.media) return;
+  if(S.media[id] && (S.media[id].loading || S.media[id].url)) return;
+  S.media[id] = { loading: true }; renderMsgs(false);
+  const req = hex(6);
+  try{
+    const o = await new Promise(function(res, rej){
+      S.reqs[req] = res; setTimeout(function(){ if(S.reqs[req]){ delete S.reqs[req]; rej(new Error('tiempo')); } }, 90000);
+      send({ t: 'media', cid: c.id, mid: id, req: req }).catch(rej);
+    });
+    if(o.t !== 'media') throw new Error(o.e === 'big' ? 'Archivo muy grande para ver aqui' : 'El telefono ya no tiene este archivo');
+    const r = await fetch(CFG.url + '/storage/v1/object/public/fc/' + o.path);
+    if(!r.ok) throw new Error('descarga');
+    const ct = await r.arrayBuffer();
+    const key = await SUB.importKey('raw', b64d(o.k), 'AES-GCM', false, ['decrypt']);
+    const pt = await SUB.decrypt({ name: 'AES-GCM', iv: b64d(o.iv) }, key, ct);
+    fetch(CFG.url + '/storage/v1/object/fc/' + o.path, { method: 'DELETE', headers: hdr() }).catch(function(){});
+    const mime = /^[a-z]+\/[a-z0-9.+-]{1,60}$/i.test(o.mime || '') ? o.mime : 'application/octet-stream';
+    S.media[id] = { url: URL.createObjectURL(new Blob([pt], { type: mime })) };
+  }catch(e){
+    S.media[id] = { err: String(e && e.message || '').indexOf('tiempo') >= 0 ? 'El telefono no respondio. Toca para reintentar' : (e && e.message) || 'Error' };
+  }
+  if(S.open === c.id) renderMsgs(false);
+}
+async function sendFile(f){
+  const c = S.chats[S.open]; if(!c || !f) return;
+  if(f.size > MAXF){ toast('El archivo pesa mas de 24 MB.'); return; }
+  toast('Enviando ' + f.name + '...');
+  try{
+    const raw = rnd(32), iv = rnd(12), key = await SUB.importKey('raw', raw, 'AES-GCM', false, ['encrypt']);
+    const ct = new Uint8Array(await SUB.encrypt({ name: 'AES-GCM', iv: iv }, key, await f.arrayBuffer()));
+    const path = 'lk/' + hex(12);
+    const r = await fetch(CFG.url + '/storage/v1/object/fc/' + path, { method: 'POST', headers: hdr({ 'Content-Type': 'application/octet-stream', 'x-upsert': 'false' }), body: ct });
+    if(!r.ok) throw new Error('subida ' + r.status);
+    await send({ t: 'file', cid: c.id, path: path, k: b64e(raw), iv: b64e(iv), name: f.name, mime: f.type || 'application/octet-stream', size: f.size });
+    toast('Enviado al telefono. Aparecera en unos segundos.');
+  }catch(e){ toast('No se pudo enviar el archivo.'); }
+}
+async function endSession(fromPhone){
+  const sid = S.sid;
+  if(!fromPhone){ try{ await send({ t: 'bye' }); }catch(e){} }
+  try{ rpc('fc_link_close', { p_sid: sid }).catch(function(){}); }catch(e){}
+  try{ localStorage.removeItem(SKEY); }catch(e){}
+  S.key = null; S.sid = ''; clearInterval(pingT); clearTimeout(loopT);
+  location.reload();
+}
+
+/* ---------- eventos ---------- */
+$('list').addEventListener('click', function(e){
+  if(e.target.id === 'archT'){ S.showArch = !S.showArch; renderList(); return; }
+  const r = e.target.closest('.row'); if(r) openChat(r.getAttribute('data-id'));
+});
+$('q').addEventListener('input', function(){ S.q = this.value; renderList(); });
+$('msgs').addEventListener('click', function(e){
+  if(e.target.id === 'olderBtn'){
+    const c = S.chats[S.open]; if(c && c.msgs.length) send({ t: 'older', cid: c.id, before: c.msgs[0].ts || 0 }).catch(function(){}); return;
+  }
+  const mc = e.target.closest('[data-media]'); if(mc){ delete S.media[mc.getAttribute('data-media')]; getMedia(mc.getAttribute('data-media')); }
+});
+$('sendBtn').addEventListener('click', sendText);
+$('txt').addEventListener('keydown', function(e){ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
+$('txt').addEventListener('input', function(){ this.style.height = 'auto'; this.style.height = Math.min(140, this.scrollHeight) + 'px'; });
+$('attBtn').addEventListener('click', function(){ $('file').click(); });
+$('file').addEventListener('change', function(){ const f = this.files && this.files[0]; this.value = ''; sendFile(f); });
+$('backBtn').addEventListener('click', function(){ document.body.classList.remove('conv'); });
+$('outBtn').addEventListener('click', function(){ if(confirm('Cerrar la sesion en este computador?')) endSession(false); });
+
+/* ---------- arranque ---------- */
+(async function(){
+  if(!CFG.url || !CFG.key){ document.body.innerHTML = '<div class="empty" style="height:100%">Falta chat-config.js (url y key del servidor).</div>'; return; }
+  if(!window.crypto || !crypto.subtle){ document.body.innerHTML = '<div class="empty" style="height:100%">Este navegador no permite el cifrado. Abre la pagina con https:// o desde el archivo local.</div>'; return; }
+  let sess = null;
+  try{ sess = JSON.parse(localStorage.getItem(SKEY) || 'null'); }catch(e){}
+  if(sess && /^[0-9a-f]{20}$/.test(sess.sid || '') && sess.k){
+    S.sid = sess.sid; S.k = sess.k; S.ack = Number(sess.ack) || 0;
+    try{ connect(await SUB.importKey('raw', b64d(sess.k), 'AES-GCM', true, ['encrypt', 'decrypt'])); return; }catch(e){}
+  }
+  showLogin();
+})();
+})();
+</script>
+</body>
+</html>
