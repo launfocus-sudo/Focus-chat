@@ -50,7 +50,7 @@
     box-shadow:inset 3px 3px 7px var(--sh-d), inset -3px -3px 7px var(--sh-l); font:inherit; }
   #list{ flex:1; overflow:auto; padding:2px 10px 12px; }
   .row{ display:flex; gap:12px; align-items:center; padding:10px 10px; border-radius:16px; cursor:pointer; margin-bottom:4px; }
-  .row:hover{ background:var(--card); }
+  .row:hover{ background:rgba(127,127,127,.09); }
   .row.sel{ background:var(--card); box-shadow:inset 2px 2px 6px var(--sh-d), inset -2px -2px 6px var(--sh-l); }
   .av{ width:46px; height:46px; border-radius:50%; flex:none; background:var(--card); color:var(--accent); display:flex; align-items:center; justify-content:center;
     font-weight:600; font-size:18px; overflow:hidden; box-shadow:2px 2px 6px var(--sh-d), -2px -2px 6px var(--sh-l); }
@@ -73,14 +73,14 @@
   .day{ align-self:center; background:var(--card); color:var(--muted); font-size:12px; border-radius:12px; padding:3px 12px; margin:10px 0 4px; }
   .more{ align-self:center; border:0; background:var(--card); color:var(--muted); border-radius:14px; padding:6px 16px; font-size:13px; margin-bottom:6px;
     box-shadow:2px 2px 6px var(--sh-d), -2px -2px 6px var(--sh-l); }
-  .b{ max-width:min(560px,78%); padding:8px 12px 6px; border-radius:16px; background:var(--card); position:relative; word-wrap:break-word; overflow-wrap:anywhere;
-    box-shadow:3px 3px 8px var(--sh-d), -2px -2px 6px var(--sh-l); }
-  .b.me{ align-self:flex-end; background:var(--mine); border-bottom-right-radius:5px; }
-  .b.them{ align-self:flex-start; border-bottom-left-radius:5px; }
+  .b{ max-width:min(560px,78%); padding:8px 12px 6px; border-radius:16px; background:var(--bg); position:relative; word-wrap:break-word; overflow-wrap:anywhere;
+    box-shadow:3px 3px 7px var(--sh-d), -3px -3px 7px var(--sh-l); }
+  .b.me{ align-self:flex-end; }
+  .b.them{ align-self:flex-start; }
   .b .who{ font-size:12px; font-weight:600; color:var(--accent); margin-bottom:2px; }
   .b .txt{ white-space:pre-wrap; }
   .b a{ color:inherit; text-decoration:underline; }
-  .b .meta{ font-size:11px; color:var(--muted); text-align:right; margin-top:2px; user-select:none; }
+  .b .meta{ font-size:11px; color:var(--accent); opacity:.9; text-align:right; margin-top:2px; user-select:none; }
   .b.fail .meta{ color:#b4483a; }
   .card{ display:flex; gap:10px; align-items:center; background:rgba(0,0,0,.05); border-radius:12px; padding:9px 12px; cursor:pointer; min-width:210px; }
   .card .ic{ font-size:22px; } .card .nm{ font-weight:600; font-size:14px; word-break:break-all; } .card .sz{ font-size:12px; color:var(--muted); }
@@ -311,14 +311,17 @@ function mix(a, b, t){
 }
 function applyTheme(t){
   if(!t || !/^#[0-9a-f]{6}$/i.test(t.bg || '') || !/^#[0-9a-f]{6}$/i.test(t.accent || '')) return;
-  const r = document.documentElement.style, dark = !!t.dark, text = /^#[0-9a-f]{6}$/i.test(t.text || '') ? t.text : (dark ? '#ece6d8' : '#3a332a');
+  const hx = function(x){ return /^#[0-9a-f]{6}$/i.test(x || ''); };
+  const r = document.documentElement.style, dark = !!t.dark, text = hx(t.text) ? t.text : (dark ? '#ece6d8' : '#3a332a');
   r.setProperty('--bg', t.bg); r.setProperty('--accent', t.accent); r.setProperty('--text', text);
   r.setProperty('--muted', mix(t.bg, text, 0.55));
-  r.setProperty('--card', dark ? mix(t.bg, '#ffffff', 0.06) : mix(t.bg, '#ffffff', 0.35));
-  r.setProperty('--mine', mix(t.bg, t.accent, dark ? 0.38 : 0.34));
+  // Igual que la app: burbujas, botones y tarjetas del MISMO color del fondo; solo las sombras las separan.
+  r.setProperty('--card', t.bg);
+  r.setProperty('--mine', t.bg);
   r.setProperty('--line', mix(t.bg, text, 0.14));
-  r.setProperty('--sh-d', dark ? mix(t.bg, '#000000', 0.5) : mix(t.bg, '#000000', 0.16));
-  r.setProperty('--sh-l', dark ? mix(t.bg, '#ffffff', 0.07) : mix(t.bg, '#ffffff', 0.6));
+  // Las sombras salen del tema del telefono (si es una app vieja que no las manda, se calculan).
+  r.setProperty('--sh-d', hx(t.sd) ? t.sd : (dark ? mix(t.bg, '#000000', 0.5) : mix(t.bg, '#000000', 0.16)));
+  r.setProperty('--sh-l', hx(t.sl) ? t.sl : (dark ? mix(t.bg, '#ffffff', 0.07) : mix(t.bg, '#ffffff', 0.6)));
   try{ localStorage.setItem('fcweb.theme', JSON.stringify(t)); }catch(e){}
 }
 try{ applyTheme(JSON.parse(localStorage.getItem('fcweb.theme') || 'null')); }catch(e){}
