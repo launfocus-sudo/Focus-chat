@@ -371,7 +371,7 @@ async function pairLoop(){
       }catch(e){}
     }
     $('loginErr').textContent = '';
-  }catch(e){ $('loginErr').textContent = 'Sin conexion con el servidor. Reintentando...'; }
+  }catch(e){ $('loginErr').textContent = 'Sin conexion con el servidor. Reintentando... (' + String((e && e.message) || e).slice(0, 160) + ')'; }
   setTimeout(pairLoop, 1500);
 }
 async function showLogin(){
