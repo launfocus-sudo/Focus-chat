@@ -6,7 +6,7 @@ Versión web de **FOCUS CHAT°** para usar tus chats cifrados desde el navegador
 
 ## Cómo se usa
 
-1. Instala la app **FOCUS** en tu teléfono Android: https://github.com/launfocus-sudo/focus-app
+1. Ten la app **FOCUS** en tu teléfono Android (disponible próximamente en Google Play).
 2. En el computador abre la página web. Aparece un código QR.
 3. En el teléfono: **FOCUS CHAT → Ajustes → Dispositivos vinculados → Vincular un dispositivo** y apunta al QR.
 4. Listo: verás tus chats y podrás leer y responder desde el computador.
@@ -30,7 +30,3 @@ Versión web de **FOCUS CHAT°** para usar tus chats cifrados desde el navegador
 
 - Teléfono Android con la app FOCUS y conexión a internet.
 - El teléfono debe tener FOCUS CHAT activo (puede estar en segundo plano; no lo cierres desde Recientes).
-
-## Proyecto relacionado
-
-- App de Android: [focus-app](https://github.com/launfocus-sudo/focus-app)
