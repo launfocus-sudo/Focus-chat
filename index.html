@@ -161,6 +161,14 @@
   #msgs{ --msgfs:15px; } #msgs.fs-s{ --msgfs:12.5px; } #msgs.fs-l{ --msgfs:18px; }
   .b .txt, .b .card .nm{ font-size:var(--msgfs); }
   .b .card .sz{ font-size:calc(var(--msgfs) - 2.5px); }
+  /* [pdfthumb] miniatura de PDF */
+  .pdfc{ border-radius:12px; overflow:hidden; background:rgba(0,0,0,.05); min-width:210px; max-width:300px; }
+  .pdfth{ display:flex; align-items:center; justify-content:center; height:150px; background:#fff; overflow:hidden; color:#9a9a9a; }
+  .pdfth img{ width:100%; height:100%; object-fit:cover; object-position:top; display:block; }
+  .pdfth svg{ width:38px; height:38px; stroke-width:1.2; }
+  .pdfin{ padding:9px 12px; }
+  .pdfin .nm{ font-weight:600; font-size:var(--msgfs); word-break:break-all; }
+  .pdfin .sz{ font-size:calc(var(--msgfs) - 2.5px); color:var(--muted); }
   .conv-head .iconbtn.aa{ margin-left:auto; }
   #mdl .opt{ display:flex; align-items:center; gap:12px; width:100%; border:0; background:transparent; text-align:left; padding:11px 12px; border-radius:14px; font-size:15px; color:var(--text); }
   #mdl .opt:hover{ background:rgba(127,127,127,.12); }
@@ -216,7 +224,7 @@
       <div id="emoPanel"><div id="emoTabs"></div><div id="emoGrid"></div></div>
       <div class="composer">
         <button class="iconbtn" id="attBtn" title="Adjuntar archivo" aria-label="Adjuntar"><svg viewBox="0 0 24 24"><path d="M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L9.5 17.2a1.7 1.7 0 0 1-2.4-2.4L14.5 7.5"/></svg></button>
-        <input type="file" id="file" class="hidden">
+        <input type="file" id="file" class="hidden" multiple>
         <button class="iconbtn" id="emoBtn" title="Emojis" aria-label="Emojis" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0"/><line x1="9" y1="9.5" x2="9" y2="9.6"/><line x1="15" y1="9.5" x2="15" y2="9.6"/></svg></button>
         <textarea id="txt" rows="1" placeholder="Escribe un mensaje"></textarea>
         <button class="iconbtn" id="sendBtn" title="Enviar" aria-label="Enviar"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button>
@@ -376,7 +384,7 @@ function ringSvg(lv){
   return '<svg class="rcring" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">' + arcs.join('') + '</svg>';
 }
 const esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
-const SUB = crypto.subtle, LK_INFO = 'focus-link-v1', MAXF = 24 * 1024 * 1024;
+const SUB = crypto.subtle, LK_INFO = 'focus-link-v1', MAXF = 100 * 1024 * 1024, CHUNK = 24 * 1024 * 1024;
 const SKEY = 'fcweb.session';
 
 /* ---------- utilidades ---------- */
@@ -550,6 +558,18 @@ function handle(o){
     if(S.open === c.id) renderMsgs('keep'); return;
   }
   if(t === 'gone'){ const c = S.chats[o.cid]; if(c) dropMsgs(c, o.mids || []); return; }
+  if(t === 'chatgone'){        /* [delsync] el telefono elimino (o bloqueo con candado) este chat */
+    const c = S.chats[o.cid]; if(!c) return;
+    c.msgs.forEach(function(m){ try{ dropMedia(m.id); }catch(e){} });
+    delete S.chats[o.cid];
+    if(S.open === o.cid){
+      S.open = null; S.sel = null; try{ selBar(); }catch(e){} try{ ctxClose(); }catch(e){}
+      document.body.classList.remove('conv');
+      $('conv').classList.add('hidden'); $('conv').style.display = 'none';
+      $('empty').classList.remove('hidden'); $('empty').style.display = '';
+    }
+    renderList(); return;
+  }
   if(t === 'lockres'){ lockRes(o); return; }
   if(t === 'fwdres'){ toast(o.ok ? 'Reenviado' : o.e === 'lock' ? 'Los archivos con clave no se reenvian.' : 'No se pudo reenviar.'); return; }
   if(t === 'media' || t === 'mediaerr'){ const r = S.reqs[o.req]; if(r){ delete S.reqs[o.req]; r(o); } return; }
@@ -643,10 +663,11 @@ function bubble(c, m){
       if(k === 'image') body += '<a href="' + md.url + '" target="_blank" rel="noopener"><img class="pic" alt="" src="' + md.url + '" onload="window.__fcImg&&window.__fcImg()"></a>';
       else if(k === 'video') body += '<video controls src="' + md.url + '"></video>';
       else if(k === 'audio') body += '<audio controls src="' + md.url + '"></audio>';
+      else if(isPdf(m)) body += pdfCard(m, md);
       else body += '<div class="card" style="cursor:default;"><span class="ic">' + ic + '</span><span><div class="nm">' + esc(m.media.name) + '</div></span></div>';
       body += '<a class="dl" href="' + md.url + '" download="' + esc(m.media.name || 'archivo') + '">Descargar</a>';
     }else{
-      const st = md && md.err ? md.err : (md && md.loading || (!md && k !== 'file' && Number(m.media.size) <= AUTO_MAX[k]) ? 'Cargando...' : (m.media.size ? szfmt(m.media.size) + ' · Toca para abrir' : 'Toca para abrir'));
+      const st = md && md.err ? md.err : (md && md.loading || (!md && (k !== 'file' || isPdf(m)) && Number(m.media.size) <= (isPdf(m) ? PDF_AUTO : AUTO_MAX[k])) ? 'Cargando...' : (m.media.size ? szfmt(m.media.size) + ' · Toca para abrir' : 'Toca para abrir'));
       body += '<div class="card" data-media="' + esc(m.id) + '"><span class="ic">' + ic + '</span><span><div class="nm">' + esc(m.media.name || 'Archivo') + '</div><div class="sz">' + esc(st) + '</div></span></div>';
     }
   }else{
@@ -736,8 +757,8 @@ function autoMedia(){
   const c = S.chats[S.open]; if(!c || !S.key) return;
   const list = c.msgs.filter(function(m){
     if(m.type !== 'media' || !m.media || m.media.ok === false || m.lk) return false;
-    const k = mediaKind(m); if(k === 'file') return false;
-    if(Number(m.media.size) > AUTO_MAX[k]) return false;
+    const k = mediaKind(m), pdf = isPdf(m); if(k === 'file' && !pdf) return false;
+    if(Number(m.media.size) > (pdf ? PDF_AUTO : AUTO_MAX[k])) return false;
     const st = S.media[m.id]; return !st;                                  // ya pedido, cargando, listo o con error: no se repite solo
   }).reverse();
   while(autoBusy < 2 && list.length){
@@ -753,10 +774,23 @@ async function getMedia(id, cid, pin){
   const req = hex(6);
   try{
     const o = await new Promise(function(res, rej){
-      S.reqs[req] = res; setTimeout(function(){ if(S.reqs[req]){ delete S.reqs[req]; rej(new Error('tiempo')); } }, 90000);
+      S.reqs[req] = res; setTimeout(function(){ if(S.reqs[req]){ delete S.reqs[req]; rej(new Error('tiempo')); } }, Number(m.media.size) > CHUNK ? 900000 : 90000);
       send({ t: 'media', cid: c.id, mid: id, req: req, pin: pin || undefined }).catch(rej);
     });
     if(o.t !== 'media') throw new Error(o.e === 'big' ? 'Archivo muy grande para ver aquí' : o.e === 'pin' ? 'Clave incorrecta' : o.e === 'lock' ? 'Archivo con clave' : 'El teléfono ya no tiene este archivo');
+    if(o.parts && o.parts.length){   /* [web100] recibir trozos */
+      const pk = await SUB.importKey('raw', b64d(o.k), 'AES-GCM', false, ['decrypt']), piv = b64d(o.iv), out = [];
+      for(let j = 0; j < o.parts.length; j++){
+        const pr = await fetch(CFG.url + '/storage/v1/object/public/fc/' + o.parts[j]);
+        if(!pr.ok) throw new Error('descarga');
+        out.push(new Blob([await SUB.decrypt({ name: 'AES-GCM', iv: ivFor(piv, j) }, pk, await pr.arrayBuffer())]));
+        fetch(CFG.url + '/storage/v1/object/fc/' + o.parts[j], { method: 'DELETE', headers: hdr() }).catch(function(){});
+      }
+      const pm = String(o.mime || '').indexOf('/') > 0 && String(o.mime).length < 80 ? o.mime : 'application/octet-stream';
+      S.media[id] = { url: URL.createObjectURL(new Blob(out, { type: pm })) };
+      if(S.open === c.id) renderMsgs(false);
+      return;
+    }
     const r = await fetch(CFG.url + '/storage/v1/object/public/fc/' + o.path);
     if(!r.ok) throw new Error('descarga');
     const ct = await r.arrayBuffer();
@@ -771,20 +805,87 @@ async function getMedia(id, cid, pin){
   }
   if(S.open === c.id) renderMsgs(false);
 }
-async function sendFile(f){
-  const c = S.chats[S.open]; if(!c || !f) return;
-  if(f.size > MAXF){ toast('El archivo pesa más de 24 MB.'); return; }
-  toast('Enviando ' + f.name + '...');
+/* [pdfthumb] logica: la web descarga los PDF de hasta 10 MB solos y dibuja la primera pagina con pdf.js (cdnjs) */
+const PDFS = {}, PDF_AUTO = 10 * 1024 * 1024, PDFJS_V = '3.11.174';
+function isPdf(m){ const md = m && m.media; return !!md && (/pdf/i.test(String(md.mime || '')) || /\.pdf$/i.test(String(md.name || ''))); }
+let pdfLibP = null;
+function loadPdfJs(){
+  if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if(pdfLibP) return pdfLibP;
+  const base = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/' + PDFJS_V + '/';
+  pdfLibP = new Promise(function(res, rej){
+    const s = document.createElement('script'); s.src = base + 'pdf.min.js';
+    s.onload = function(){ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js'; res(window.pdfjsLib); }catch(e){ rej(e); } };
+    s.onerror = function(){ pdfLibP = null; rej(new Error('pdfjs')); };
+    document.head.appendChild(s);
+  });
+  return pdfLibP;
+}
+async function pdfThumb(m, md){
+  const id = m.id; if(PDFS[id]) return;
+  const st = PDFS[id] = { busy: true };
+  try{
+    const lib = await loadPdfJs();
+    const buf = await (await fetch(md.url)).arrayBuffer();
+    const doc = await lib.getDocument({ data: new Uint8Array(buf) }).promise;
+    try{
+      const page = await doc.getPage(1), v1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: 480 / v1.width });
+      const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(vp.width)); cv.height = Math.max(1, Math.round(vp.height));
+      const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      st.url = cv.toDataURL('image/jpeg', 0.82); st.pages = doc.numPages;
+    }finally{ try{ doc.destroy(); }catch(e){} }
+  }catch(e){ st.err = true; }
+  st.busy = false;
+  const c = S.chats[S.open]; if(c && c.msgs.indexOf(m) >= 0) renderMsgs(false);
+}
+function pdfCard(m, md){
+  const p = PDFS[m.id];
+  if(!p) setTimeout(function(){ pdfThumb(m, md); }, 0);
+  const th = p && p.url ? '<img alt="" src="' + p.url + '">' : ICO.clip;
+  const pg = p && p.pages ? (p.pages === 1 ? '1 página' : p.pages + ' páginas') + ' · ' : '';
+  return '<div class="pdfc"><a class="pdfth" href="' + md.url + '" target="_blank" rel="noopener">' + th + '</a><div class="pdfin"><div class="nm">' + esc(m.media.name || 'PDF') + '</div><div class="sz">' + esc(pg + szfmt(m.media.size) + ' · PDF') + '</div></div></div>';
+}
+async function sendFile(f, cid){
+  const c = S.chats[cid || S.open]; if(!c || !f) return false;
+  /* [web100] enviar: hasta 100 MB, en trozos de 24 MB cifrados con la misma llave (IV distinto por trozo) */
+  if(f.size > MAXF){ toast(f.name + ' pesa más de 100 MB.'); return false; }
+  const n = Math.max(1, Math.ceil(f.size / CHUNK)), paths = [];
+  toast('Enviando ' + f.name + (n > 1 ? ' (0/' + n + ')' : '') + '...');
   try{
     const raw = rnd(32), iv = rnd(12), key = await SUB.importKey('raw', raw, 'AES-GCM', false, ['encrypt']);
-    const ct = new Uint8Array(await SUB.encrypt({ name: 'AES-GCM', iv: iv }, key, await f.arrayBuffer()));
-    const path = 'lk/' + hex(12);
-    const r = await fetch(CFG.url + '/storage/v1/object/fc/' + path, { method: 'POST', headers: hdr({ 'Content-Type': 'application/octet-stream', 'x-upsert': 'false' }), body: ct });
-    if(!r.ok) throw new Error('subida ' + r.status);
-    await send({ t: 'file', cid: c.id, path: path, k: b64e(raw), iv: b64e(iv), name: f.name, mime: f.type || 'application/octet-stream', size: f.size });
+    for(let j = 0; j < n; j++){
+      const ct = new Uint8Array(await SUB.encrypt({ name: 'AES-GCM', iv: ivFor(iv, j) }, key, await f.slice(j * CHUNK, (j + 1) * CHUNK).arrayBuffer()));
+      const path = 'lk/' + hex(12);
+      const r = await fetch(CFG.url + '/storage/v1/object/fc/' + path, { method: 'POST', headers: hdr({ 'Content-Type': 'application/octet-stream', 'x-upsert': 'false' }), body: ct });
+      if(!r.ok) throw new Error('subida ' + r.status);
+      paths.push(path);
+      if(n > 1) toast('Enviando ' + f.name + ' (' + (j + 1) + '/' + n + ')...');
+    }
+    const o = { t: 'file', cid: c.id, path: paths[0], k: b64e(raw), iv: b64e(iv), name: f.name, mime: f.type || 'application/octet-stream', size: f.size };
+    if(n > 1){ o.parts = paths; o.cs = CHUNK; }
+    await send(o);
     toast('Enviado al teléfono. Aparecerá en unos segundos.');
-  }catch(e){ toast('No se pudo enviar el archivo.'); }
+    return true;
+  }catch(e){
+    paths.forEach(function(p){ fetch(CFG.url + '/storage/v1/object/fc/' + p, { method: 'DELETE', headers: hdr() }).catch(function(){}); });
+    toast('No se pudo enviar el archivo.');
+    return false;
+  }
 }
+/* varios archivos: se envian de a uno, en orden, al chat donde se eligieron */
+async function sendFiles(list){
+  let fl = Array.prototype.slice.call(list || []); if(!fl.length) return;
+  if(fl.length > 30){ toast('Máximo 30 archivos a la vez.'); fl = fl.slice(0, 30); }
+  const cid = S.open; let ok = 0;
+  for(let i = 0; i < fl.length; i++){
+    if(fl.length > 1) toast('Enviando archivo ' + (i + 1) + ' de ' + fl.length + '...');
+    if(await sendFile(fl[i], cid)) ok++;
+  }
+  if(fl.length > 1) toast(ok === fl.length ? fl.length + ' archivos enviados al teléfono.' : ok + ' de ' + fl.length + ' archivos enviados.');
+}
+/* IV de cada trozo: el IV base con el contador del trozo mezclado al final (igual que la app; el trozo 0 queda igual) */
+function ivFor(iv, i){ const v = new Uint8Array(iv), dv = new DataView(v.buffer); dv.setUint32(8, (dv.getUint32(8) ^ i) >>> 0); return v; }
 async function endSession(fromPhone){
   const sid = S.sid;
   if(!fromPhone){ try{ await send({ t: 'bye' }); }catch(e){} }
@@ -960,6 +1061,8 @@ function delMsgs(ids){
 }
 function dropMsgs(c, ids){
   const g = {}; ids.forEach(function(id){ g[id] = 1; });
+  ids.forEach(function(id){ try{ dropMedia(id); }catch(e){} });   /* [delsync] media */
+  if(S.sel){ ids.forEach(function(id){ delete S.sel[id]; }); if(!Object.keys(S.sel).length) S.sel = null; try{ selBar(); }catch(e){} }
   c.msgs = c.msgs.filter(function(m){ return !g[m.id]; });
   const last = c.msgs[c.msgs.length - 1]; if(last && last.ts) c.ts = last.ts;
   renderList(); if(S.open === c.id) renderMsgs(false);
@@ -1011,7 +1114,7 @@ function lockRes(o){
   toast(o.lk ? 'Archivo con clave' : 'Clave quitada');
   if(c && S.open === c.id) renderMsgs(false);
 }
-function dropMedia(id){ const md = S.media[id]; if(md && md.url){ try{ URL.revokeObjectURL(md.url); }catch(e){} } delete S.media[id]; }
+function dropMedia(id){ try{ delete PDFS[id]; }catch(e){} const md = S.media[id]; if(md && md.url){ try{ URL.revokeObjectURL(md.url); }catch(e){} } delete S.media[id]; }
 function doAct(a, m){
   if(!m) return;
   if(a === 'sel') selStart(m.id);
@@ -1208,7 +1311,7 @@ async function camOpen(){
   camStream = st;     // se asigna después de mdlOpen (que llama a mdlClose y apagaría la cámara)
 }
 $('attBtn').addEventListener('click', attMenu);
-$('file').addEventListener('change', function(){ const f = this.files && this.files[0]; this.value = ''; sendFile(f); });
+$('file').addEventListener('change', function(){ const fl = Array.prototype.slice.call(this.files || []); this.value = ''; sendFiles(fl); });
 $('backBtn').addEventListener('click', function(){ document.body.classList.remove('conv'); });
 $('outBtn').addEventListener('click', function(){ if(confirm('¿Cerrar la sesión en este computador?')) endSession(false); });
 
