@@ -100,8 +100,8 @@
 
   /* ---------- menu de mensaje (clic derecho / mantener presionado) ---------- */
   .b{ -webkit-touch-callout:none; }
-  .b.selm::after{ content:''; position:absolute; inset:0; border-radius:inherit; border:1.5px solid var(--text); opacity:.6; pointer-events:none; filter:blur(.35px);
-    -webkit-mask-image:linear-gradient(155deg,#000 0%,rgba(0,0,0,.55) 25%,transparent 58%); mask-image:linear-gradient(155deg,#000 0%,rgba(0,0,0,.55) 25%,transparent 58%); }
+  .b.selm::after{ content:''; position:absolute; inset:-3px; border-radius:19px; border:1px solid var(--accent, var(--text)); pointer-events:none; z-index:3;
+    -webkit-mask-image:linear-gradient(to bottom, #000 0%, transparent 52%); mask-image:linear-gradient(to bottom, #000 0%, transparent 52%); }
   body.selmode .b{ cursor:pointer; }
   #ctx{ position:fixed; z-index:30; min-width:210px; padding:8px; border-radius:20px; background:var(--card);
     box-shadow:8px 8px 22px var(--sh-d), -6px -6px 18px var(--sh-l), 0 0 0 1px var(--line); }
@@ -120,7 +120,27 @@
   .acts svg{ width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
   body.selmode .acts{ visibility:hidden; }
   .b .meta{ flex-wrap:wrap; }
-  .react{ font-size:14px; margin-top:3px; }
+  .react{ position:absolute; bottom:-13px; margin:0; padding:1px 7px 2px; border-radius:999px; font-size:14px; line-height:1.25; white-space:nowrap; z-index:2;
+    background:var(--bg); box-shadow:2px 2px 5px var(--sh-d), -2px -2px 5px var(--sh-l); }
+  .b.me .react{ right:12px; } .b.them .react{ left:12px; }
+  .b:has(> .react){ margin-bottom:14px; }
+  /* 1 a 3 emojis solos: grandes, sin burbuja y con animacion (igual que la app) */
+  .b.big{ background:transparent; box-shadow:none; padding:0 4px; line-height:1.1; }
+  .b.big .big-emoji{ display:inline-block; transform-origin:50% 70%; }
+  .b.big.fresh .big-emoji{ animation:emojiLife 1.6s ease-in-out 3 both; }
+  .b.big.fresh .big-emoji:nth-child(2){ animation-delay:.2s; }
+  .b.big.fresh .big-emoji:nth-child(3){ animation-delay:.4s; }
+  .b.big .meta{ margin-top:4px; }
+  @keyframes emojiLife{ 0%,100%{ transform:scale(1) rotate(0deg); } 25%{ transform:scale(1.1) rotate(-6deg); } 50%{ transform:scale(1.04) rotate(0deg); } 75%{ transform:scale(1.12) rotate(6deg); } }
+  @media (prefers-reduced-motion: reduce){ .b.big .big-emoji{ animation:none; } }
+  #emoPanel{ display:none; border-top:1px solid var(--line); padding:8px 14px 10px; }
+  #emoPanel.on{ display:block; }
+  #emoTabs{ display:flex; gap:4px; overflow-x:auto; padding-bottom:6px; }
+  #emoTabs button, #emoGrid button{ border:0; background:transparent; border-radius:12px; font-size:22px; line-height:1; padding:6px 8px; cursor:pointer; flex:none; }
+  #emoTabs button.on{ background:var(--bg); box-shadow:inset 2px 2px 5px var(--sh-d), inset -2px -2px 5px var(--sh-l); }
+  #emoGrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(40px,1fr)); gap:2px; max-height:190px; overflow-y:auto; }
+  #emoGrid button:hover{ background:rgba(127,127,127,.15); }
+  .emoTitle{ grid-column:1/-1; font-size:12px; color:var(--muted); padding:2px 4px; }
   #mdl{ position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.35); display:flex; align-items:center; justify-content:center; padding:20px; }
   #mdl .box{ background:var(--card); border-radius:24px; padding:22px; max-width:400px; width:100%; max-height:80vh; overflow:auto;
     box-shadow:10px 10px 28px var(--sh-d), -8px -8px 22px var(--sh-l); }
@@ -192,9 +212,11 @@
         <button class="iconbtn aa" id="fsBtn" title="Tamano de letra" aria-label="Tamano de letra"><svg viewBox="0 0 24 24"><path d="M3 19l5-13 5 13"/><line x1="4.8" y1="14" x2="11.2" y2="14"/><path d="M13.5 19l3.5-8.5 3.5 8.5"/><line x1="14.7" y1="16.5" x2="19.3" y2="16.5"/></svg></button>
       </div>
       <div id="msgs"></div>
+      <div id="emoPanel"><div id="emoTabs"></div><div id="emoGrid"></div></div>
       <div class="composer">
         <button class="iconbtn" id="attBtn" title="Adjuntar archivo" aria-label="Adjuntar"><svg viewBox="0 0 24 24"><path d="M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L9.5 17.2a1.7 1.7 0 0 1-2.4-2.4L14.5 7.5"/></svg></button>
         <input type="file" id="file" class="hidden">
+        <button class="iconbtn" id="emoBtn" title="Emojis" aria-label="Emojis" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0"/><line x1="9" y1="9.5" x2="9" y2="9.6"/><line x1="15" y1="9.5" x2="15" y2="9.6"/></svg></button>
         <textarea id="txt" rows="1" placeholder="Escribe un mensaje"></textarea>
         <button class="iconbtn" id="sendBtn" title="Enviar" aria-label="Enviar"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button>
       </div>
@@ -383,9 +405,11 @@ function mix(a, b, t){
 function applyTheme(t){
   if(!t || !/^#[0-9a-f]{6}$/i.test(t.bg || '') || !/^#[0-9a-f]{6}$/i.test(t.accent || '')) return;
   const hx = function(x){ return /^#[0-9a-f]{6}$/i.test(x || ''); };
-  const r = document.documentElement.style, dark = !!t.dark, text = hx(t.text) ? t.text : (dark ? '#ece6d8' : '#3a332a');
+  const r = document.documentElement.style, dark = !!t.dark;
+  let text = hx(t.text) ? t.text : (dark ? '#ece6d8' : '#3a332a');
+  if(!dark) text = mix(text, '#000000', 0.45);   // solo web: textos mas oscuros en los temas claros
   r.setProperty('--bg', t.bg); r.setProperty('--accent', t.accent); r.setProperty('--text', text);
-  r.setProperty('--muted', mix(t.bg, text, 0.55));
+  r.setProperty('--muted', mix(t.bg, text, dark ? 0.55 : 0.75));
   // Igual que la app: burbujas, botones y tarjetas del MISMO color del fondo; solo las sombras las separan.
   r.setProperty('--card', t.bg);
   r.setProperty('--mine', t.bg);
@@ -573,10 +597,19 @@ function renderList(){
   if(hasArch || S.showArch) h += '<div class="arch-toggle" id="archT">' + (S.showArch ? 'Volver a los chats' : 'Archivados') + '</div>';
   $('list').innerHTML = h; updateTitle();
 }
+const BIG_RE = /\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*/gu;
+function bigEmojiList(txt){
+  const str = String(txt || '').trim();
+  if(!str || str.length > 40) return [];
+  const f = str.match(BIG_RE) || [];
+  if(!f.length || f.length > 3) return [];
+  if(str.replace(BIG_RE, '').replace(/\s+/g, '') !== '') return [];
+  return f;
+}
 function linkify(s){ return esc(s).replace(/(https?:\/\/[^\s<]+)/g, function(u){ return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>'; }); }
 function bubble(c, m){
   const me = m.me, t = m.type || 'text', md = S.media[m.id];
-  let body = '';
+  let body = '', big = false;
   if(m.via) body += '<div class="who" style="font-style:italic;font-weight:400">Enviado desde ' + esc(m.via) + '</div>';
   if(m.fwd) body += '<div class="who" style="font-style:italic;font-weight:400">Reenviado</div>';
   if(c.group && !me && m.who) body += '<div class="who">' + esc(m.who) + '</div>';
@@ -600,10 +633,15 @@ function bubble(c, m){
       body += '<div class="card" data-media="' + esc(m.id) + '"><span class="ic">' + ic + '</span><span><div class="nm">' + esc(m.media.name || 'Archivo') + '</div><div class="sz">' + esc(st) + '</div></span></div>';
     }
   }else{
-    body += '<div class="txt">' + linkify(m.text || summary(m) || '') + '</div>';
+    const bigL = bigEmojiList(m.text);
+    if(bigL.length){
+      big = true;
+      const px = bigL.length === 1 ? 56 : bigL.length === 2 ? 44 : 36;
+      body += '<span class="big-wrap" style="font-size:' + px + 'px;">' + bigL.map(function(e){ return '<span class="big-emoji">' + esc(e) + '</span>'; }).join('') + '</span>';
+    }else body += '<div class="txt">' + linkify(m.text || summary(m) || '') + '</div>';
   }
   const tick = !me ? '' : m.st === 'sending' ? ' ...' : m.st === 'fail' ? ' !' : m.st === 'sent' ? ' ' + ringSvg(1) : '';
-  return '<div class="b ' + (me ? 'me' : 'them') + (m.st === 'fail' ? ' fail' : '') + (S.sel && S.sel[m.id] ? ' selm' : '') + '" data-mid="' + esc(m.id) + '">' + body + reactHtml(m) + '<div class="meta">' + actsHtml(m) + '<span>' + tfmt(m.ts) + tick + '</span></div></div>';
+  return '<div class="b ' + (big ? 'big ' : '') + (big && (Date.now() - (m.ts || 0)) < 8000 ? 'fresh ' : '') + (me ? 'me' : 'them') + (m.st === 'fail' ? ' fail' : '') + (S.sel && S.sel[m.id] ? ' selm' : '') + '" data-mid="' + esc(m.id) + '">' + body + reactHtml(m) + '<div class="meta">' + actsHtml(m) + '<span>' + tfmt(m.ts) + tick + '</span></div></div>';
 }
 
 function reactHtml(m){
@@ -1041,6 +1079,42 @@ $('copyCode').addEventListener('click', function(e){
 $('sendBtn').addEventListener('click', sendText);
 $('txt').addEventListener('keydown', function(e){ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
 $('txt').addEventListener('input', function(){ this.style.height = 'auto'; this.style.height = Math.min(140, this.scrollHeight) + 'px'; });
+/* ---------- selector de emojis junto a la barra de escribir (como en la app) ---------- */
+  const WEB_EMO = [
+    ['\uD83D\uDD52', null],
+    ['\uD83D\uDE00', '\uD83D\uDE00 \uD83D\uDE03 \uD83D\uDE04 \uD83D\uDE01 \uD83D\uDE06 \uD83D\uDE05 \uD83E\uDD23 \uD83D\uDE02 \uD83D\uDE42 \uD83D\uDE43 \uD83D\uDE09 \uD83D\uDE0A \uD83D\uDE07 \uD83E\uDD70 \uD83D\uDE0D \uD83E\uDD29 \uD83D\uDE18 \uD83D\uDE17 \u263A\uFE0F \uD83D\uDE1A \uD83D\uDE19 \uD83D\uDE0B \uD83D\uDE1B \uD83D\uDE1C \uD83E\uDD2A \uD83D\uDE1D \uD83E\uDD11 \uD83E\uDD17 \uD83E\uDD2D \uD83E\uDD2B \uD83E\uDD14 \uD83E\uDD10 \uD83E\uDD28 \uD83D\uDE10 \uD83D\uDE11 \uD83D\uDE36 \uD83D\uDE0F \uD83D\uDE12 \uD83D\uDE44 \uD83D\uDE2C \uD83E\uDD25 \uD83D\uDE0C \uD83D\uDE14 \uD83D\uDE2A \uD83E\uDD24 \uD83D\uDE34 \uD83D\uDE37 \uD83E\uDD12 \uD83E\uDD15 \uD83E\uDD22 \uD83E\uDD2E \uD83E\uDD27 \uD83E\uDD75 \uD83E\uDD76 \uD83E\uDD74 \uD83D\uDE35 \uD83E\uDD2F \uD83E\uDD20 \uD83E\uDD73 \uD83D\uDE0E \uD83E\uDD13 \uD83E\uDDD0 \uD83D\uDE15 \uD83D\uDE1F \uD83D\uDE41 \u2639\uFE0F \uD83D\uDE2E \uD83D\uDE2F \uD83D\uDE32 \uD83D\uDE33 \uD83E\uDD7A \uD83D\uDE26 \uD83D\uDE27 \uD83D\uDE28 \uD83D\uDE30 \uD83D\uDE25 \uD83D\uDE22 \uD83D\uDE2D \uD83D\uDE31 \uD83D\uDE16 \uD83D\uDE23 \uD83D\uDE1E \uD83D\uDE13 \uD83D\uDE29 \uD83D\uDE2B \uD83E\uDD71 \uD83D\uDE24 \uD83D\uDE21 \uD83D\uDE20 \uD83E\uDD2C \uD83D\uDE08 \uD83D\uDC7F \uD83D\uDC80 \uD83D\uDCA9 \uD83E\uDD21 \uD83D\uDC7B \uD83D\uDC7D \uD83E\uDD16'],
+    ['\uD83D\uDC4B', '\uD83D\uDC4B \uD83E\uDD1A \u270B \uD83D\uDD96 \uD83D\uDC4C \uD83E\uDD0C \u270C\uFE0F \uD83E\uDD1E \uD83E\uDD1F \uD83E\uDD18 \uD83E\uDD19 \uD83D\uDC48 \uD83D\uDC49 \uD83D\uDC46 \uD83D\uDC47 \u261D\uFE0F \uD83D\uDC4D \uD83D\uDC4E \u270A \uD83D\uDC4A \uD83E\uDD1B \uD83E\uDD1C \uD83D\uDC4F \uD83D\uDE4C \uD83D\uDC50 \uD83E\uDD32 \uD83E\uDD1D \uD83D\uDE4F \u270D\uFE0F \uD83D\uDC85 \uD83D\uDCAA \uD83E\uDDBE \uD83D\uDC40 \uD83D\uDC41\uFE0F \uD83D\uDC45 \uD83D\uDC44 \uD83E\uDDE0 \uD83D\uDC76 \uD83E\uDDD2 \uD83D\uDC66 \uD83D\uDC67 \uD83E\uDDD1 \uD83D\uDC68 \uD83D\uDC69 \uD83E\uDDD3 \uD83D\uDC74 \uD83D\uDC75 \uD83D\uDE4B \uD83E\uDD37 \uD83E\uDD26 \uD83D\uDC83 \uD83D\uDD7A'],
+    ['\u2764\uFE0F', '\u2764\uFE0F \uD83E\uDDE1 \uD83D\uDC9B \uD83D\uDC9A \uD83D\uDC99 \uD83D\uDC9C \uD83E\uDD0E \uD83D\uDDA4 \uD83E\uDD0D \uD83D\uDC94 \u2763\uFE0F \uD83D\uDC95 \uD83D\uDC9E \uD83D\uDC93 \uD83D\uDC97 \uD83D\uDC96 \uD83D\uDC98 \uD83D\uDC9D \uD83D\uDC8B \uD83D\uDCAF \uD83D\uDCA2 \uD83D\uDCA5 \uD83D\uDCAB \uD83D\uDCA6 \uD83D\uDCA8 \uD83D\uDCAC \uD83D\uDCA4 \u2728 \uD83C\uDF1F \u2B50 \uD83D\uDD25 \uD83C\uDF89 \uD83C\uDF8A \uD83C\uDF81 \uD83C\uDF88 \uD83C\uDFC6 \uD83E\uDD47 \u2705 \u274C \u2757 \u2753 \u26A0\uFE0F \uD83D\uDD14 \uD83D\uDD12 \uD83D\uDD11'],
+    ['\uD83D\uDC36', '\uD83D\uDC36 \uD83D\uDC31 \uD83D\uDC2D \uD83D\uDC39 \uD83D\uDC30 \uD83E\uDD8A \uD83D\uDC3B \uD83D\uDC3C \uD83D\uDC28 \uD83D\uDC2F \uD83E\uDD81 \uD83D\uDC2E \uD83D\uDC37 \uD83D\uDC38 \uD83D\uDC35 \uD83D\uDE48 \uD83D\uDE49 \uD83D\uDE4A \uD83D\uDC14 \uD83D\uDC27 \uD83D\uDC26 \uD83E\uDD86 \uD83E\uDD85 \uD83E\uDD89 \uD83E\uDD87 \uD83D\uDC3A \uD83D\uDC17 \uD83D\uDC34 \uD83E\uDD84 \uD83D\uDC1D \uD83D\uDC1B \uD83E\uDD8B \uD83D\uDC0C \uD83D\uDC1E \uD83D\uDC22 \uD83D\uDC0D \uD83D\uDC19 \uD83E\uDD91 \uD83E\uDD90 \uD83D\uDC20 \uD83D\uDC2C \uD83D\uDC33 \uD83E\uDD88 \uD83D\uDC0A \uD83D\uDC18 \uD83E\uDD92 \uD83D\uDC2A \uD83C\uDF35 \uD83C\uDF32 \uD83C\uDF33 \uD83C\uDF3B \uD83C\uDF39 \uD83C\uDF37 \uD83C\uDF40 \uD83C\uDF41 \uD83C\uDF3C \u2600\uFE0F \uD83C\uDF19 \u26C5 \uD83C\uDF27\uFE0F \u26A1 \u2744\uFE0F \uD83C\uDF08'],
+    ['\uD83C\uDF54', '\uD83C\uDF4E \uD83C\uDF4A \uD83C\uDF4B \uD83C\uDF4C \uD83C\uDF49 \uD83C\uDF47 \uD83C\uDF53 \uD83C\uDF51 \uD83C\uDF52 \uD83C\uDF4D \uD83E\uDD6D \uD83E\uDD51 \uD83C\uDF45 \uD83E\uDD55 \uD83C\uDF3D \uD83E\uDD54 \uD83C\uDF5E \uD83E\uDDC0 \uD83C\uDF73 \uD83E\uDD53 \uD83C\uDF54 \uD83C\uDF5F \uD83C\uDF55 \uD83C\uDF2D \uD83C\uDF2E \uD83C\uDF2F \uD83E\uDD57 \uD83C\uDF5D \uD83C\uDF5C \uD83C\uDF63 \uD83C\uDF69 \uD83C\uDF6A \uD83C\uDF82 \uD83C\uDF70 \uD83C\uDF6B \uD83C\uDF6C \uD83C\uDF66 \u2615 \uD83C\uDF75 \uD83E\uDD64 \uD83C\uDF7A \uD83C\uDF77 \uD83E\uDD42 \uD83C\uDF7E'],
+    ['\u26BD', '\u26BD \uD83C\uDFC0 \uD83C\uDFC8 \u26BE \uD83C\uDFBE \uD83C\uDFD0 \uD83C\uDFB1 \uD83C\uDFD3 \uD83E\uDD4A \uD83C\uDFAF \uD83C\uDFAE \uD83C\uDFB2 \uD83C\uDFB5 \uD83C\uDFB6 \uD83C\uDFA4 \uD83C\uDFA7 \uD83C\uDFB8 \uD83C\uDFB9 \uD83E\uDD41 \uD83D\uDE97 \uD83D\uDE95 \uD83D\uDE8C \uD83D\uDE93 \uD83D\uDE91 \uD83C\uDFCD\uFE0F \uD83D\uDEB2 \u2708\uFE0F \uD83D\uDE80 \uD83D\uDEA2 \uD83C\uDFE0 \uD83C\uDFD6\uFE0F \uD83C\uDFD4\uFE0F \uD83C\uDF0D'],
+    ['\uD83D\uDCA1', '\u231A \uD83D\uDCF1 \uD83D\uDCBB \u2328\uFE0F \uD83D\uDDA5\uFE0F \uD83D\uDCF7 \uD83D\uDCF9 \uD83C\uDFA5 \uD83D\uDCFA \uD83D\uDCFB \u23F0 \uD83D\uDD0B \uD83D\uDD0C \uD83D\uDCA1 \uD83D\uDD26 \uD83D\uDCB0 \uD83D\uDCB3 \uD83D\uDC8E \uD83D\uDD27 \uD83D\uDD28 \u2699\uFE0F \uD83D\uDCE6 \u2709\uFE0F \uD83D\uDCDD \uD83D\uDCCE \uD83D\uDCCC \uD83D\uDCC5 \uD83D\uDCDA \uD83D\uDD0D \uD83D\uDD13 \uD83D\uDECD\uFE0F \uD83D\uDC51 \uD83D\uDC8D \uD83D\uDC5F \uD83D\uDC55 \uD83D\uDC53'],
+    ['\uD83C\uDFC1', '\uD83C\uDFC1 \uD83D\uDEA9 \uD83C\uDFF3\uFE0F \uD83C\uDDE8\uD83C\uDDF4 \uD83C\uDDF2\uD83C\uDDFD \uD83C\uDDEA\uD83C\uDDF8 \uD83C\uDDFA\uD83C\uDDF8 \uD83C\uDDE6\uD83C\uDDF7 \uD83C\uDDE7\uD83C\uDDF7 \uD83C\uDDE8\uD83C\uDDF1 \uD83C\uDDF5\uD83C\uDDEA \uD83C\uDDFB\uD83C\uDDEA \uD83C\uDDEA\uD83C\uDDE8 \uD83C\uDDFA\uD83C\uDDFE \uD83C\uDDEB\uD83C\uDDF7 \uD83C\uDDEE\uD83C\uDDF9 \uD83C\uDDE9\uD83C\uDDEA \uD83C\uDDEC\uD83C\uDDE7 \uD83C\uDDEF\uD83C\uDDF5 \uD83C\uDDE8\uD83C\uDDF3 \uD83C\uDDF0\uD83C\uDDF7']
+  ];
+let emoCat = 1;
+function emoRecent(){ try{ return JSON.parse(localStorage.getItem('fcweb.emo') || '[]').slice(0, 24); }catch(e){ return []; } }
+function emoRender(){
+  const rec = emoRecent(); if(emoCat === 0 && !rec.length) emoCat = 1;
+  $('emoTabs').innerHTML = WEB_EMO.map(function(c, i){ if(i === 0 && !rec.length) return ''; return '<button type="button" data-i="' + i + '" class="' + (i === emoCat ? 'on' : '') + '">' + c[0] + '</button>'; }).join('');
+  const list = emoCat === 0 ? rec : WEB_EMO[emoCat][1].split(' ');
+  $('emoGrid').innerHTML = (emoCat === 0 ? '<div class="emoTitle">Recientes</div>' : '') + list.map(function(e){ return '<button type="button">' + esc(e) + '</button>'; }).join('');
+  $('emoGrid').scrollTop = 0;
+}
+function emoPick(e){
+  const t = $('txt'); if(!t || !e) return;
+  const a = t.selectionStart == null ? t.value.length : t.selectionStart, b = t.selectionEnd == null ? a : t.selectionEnd;
+  t.value = t.value.slice(0, a) + e + t.value.slice(b);
+  const pos = a + e.length; try{ t.setSelectionRange(pos, pos); }catch(x){}
+  try{ t.dispatchEvent(new Event('input')); }catch(x){}
+  try{ const r = emoRecent().filter(function(z){ return z !== e; }); r.unshift(e); localStorage.setItem('fcweb.emo', JSON.stringify(r.slice(0, 24))); }catch(x){}
+}
+$('emoBtn').addEventListener('click', function(){
+  const p = $('emoPanel'), on = !p.classList.contains('on');
+  p.classList.toggle('on', on); $('emoBtn').style.opacity = on ? '.7' : '';
+  if(on){ emoCat = emoRecent().length ? 0 : 1; emoRender(); }
+});
+$('emoTabs').addEventListener('click', function(e){ const b = e.target.closest('button'); if(b){ emoCat = +b.getAttribute('data-i'); emoRender(); } });
+$('emoGrid').addEventListener('click', function(e){ const b = e.target.closest('button'); if(b) emoPick(b.textContent); });
 $('attBtn').addEventListener('click', function(){ $('file').click(); });
 $('file').addEventListener('change', function(){ const f = this.files && this.files[0]; this.value = ''; sendFile(f); });
 $('backBtn').addEventListener('click', function(){ document.body.classList.remove('conv'); });
