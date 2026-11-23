@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOCUS CHAT WEB - Chat cifrado en tu computador</title>
-<meta name="description" content="FOCUS CHAT WEB: la version web de FOCUS CHAT°. Vincula tu telefono con un codigo QR y usa tus chats cifrados de extremo a extremo desde el navegador de tu computador.">
+<meta name="description" content="FOCUS CHAT WEB: la versión web de FOCUS CHAT°. Vincula tu teléfono con un código QR y usa tus chats cifrados de extremo a extremo desde el navegador de tu computador.">
 <meta name="robots" content="index, follow">
 <meta name="theme-color" content="#e6e2d9">
 <meta property="og:type" content="website">
 <meta property="og:title" content="FOCUS CHAT WEB - Chat cifrado en tu computador">
-<meta property="og:description" content="FOCUS CHAT WEB: vincula tu telefono con un codigo QR y usa FOCUS CHAT° desde el navegador. Cifrado de extremo a extremo.">
+<meta property="og:description" content="FOCUS CHAT WEB: vincula tu teléfono con un código QR y usa FOCUS CHAT° desde el navegador. Cifrado de extremo a extremo.">
 <style>
   :root{
     --bg:#e6e2d9; --accent:#b98a73; --text:#3a332a; --muted:#8d857a; --card:#eeeae1; --mine:#d8c3b5; --line:#d3cdc1;
@@ -177,17 +177,17 @@
       <div class="brand" style="font-size:15px; margin-bottom:22px;">FOCUS CHAT°</div>
       <h1>Usa FOCUS CHAT WEB en tu computador</h1>
       <ol>
-        <li>Abre <b>FOCUS CHAT</b> en tu telefono.</li>
+        <li>Abre <b>FOCUS CHAT</b> en tu teléfono.</li>
         <li>Entra a <b>Ajustes &rsaquo; Dispositivos vinculados</b>.</li>
-        <li>Toca <b>Vincular un dispositivo</b> y apunta la camara a este codigo.</li>
+        <li>Toca <b>Vincular un dispositivo</b> y apunta la cámara a este código.</li>
       </ol>
-      <div class="qr-note"><a href="#" id="copyCode" style="color:var(--accent)">Copiar codigo</a> (si lo vas a pegar en la app en vez de escanearlo)</div>
-      <div class="qr-note" style="margin-top:8px">Tus mensajes siguen cifrados de extremo a extremo. El telefono debe tener FOCUS CHAT abierto y con internet.</div>
+      <div class="qr-note"><a href="#" id="copyCode" style="color:var(--accent)">Copiar código</a> (si lo vas a pegar en la app en vez de escanearlo)</div>
+      <div class="qr-note" style="margin-top:8px">Tus mensajes siguen cifrados de extremo a extremo. El teléfono debe tener FOCUS CHAT abierto y con internet.</div>
       <div id="loginErr"></div>
     </div>
     <div class="qr-box"><canvas id="qr" width="10" height="10"></canvas></div>
   </div>
-  <p class="seo"><b>FOCUS CHAT WEB</b> es la version web de <b>FOCUS CHAT°</b>, un chat con cifrado de extremo a extremo: vincula tu telefono escaneando el codigo QR y usa tus conversaciones desde el navegador de tu computador, sin instalar nada.</p>
+  <p class="seo"><b>FOCUS CHAT WEB</b> es la versión web de <b>FOCUS CHAT°</b>, un chat con cifrado de extremo a extremo: vincula tu teléfono escaneando el código QR y usa tus conversaciones desde el navegador de tu computador, sin instalar nada.</p>
   <noscript><p class="seo">Para usar FOCUS CHAT° en el computador activa JavaScript en tu navegador.</p></noscript>
 </div>
 
@@ -196,20 +196,20 @@
     <div class="side-head">
       <div class="av" id="meAv">?</div>
       <div class="brand" id="meBrand"><div id="meNm">FOCUS CHAT°</div><div class="brand-sub hidden" id="meSub">FOCUS CHAT°</div></div>
-      <button class="iconbtn" id="outBtn" title="Cerrar sesion" aria-label="Cerrar sesion"><svg viewBox="0 0 24 24"><path d="M9 4H5v16h4"/><polyline points="16 8 20 12 16 16"/><line x1="20" y1="12" x2="9" y2="12"/></svg></button>
+      <button class="iconbtn" id="outBtn" title="Cerrar sesión" aria-label="Cerrar sesión"><svg viewBox="0 0 24 24"><path d="M9 4H5v16h4"/><polyline points="16 8 20 12 16 16"/><line x1="20" y1="12" x2="9" y2="12"/></svg></button>
     </div>
     <div class="search"><input id="q" type="text" placeholder="Buscar chat" autocomplete="off"></div>
-    <div id="banner" class="hidden">Sin conexion con el telefono. Abre FOCUS CHAT en el telefono.</div>
+    <div id="banner" class="hidden">Sin conexión con el teléfono. Abre FOCUS CHAT en el teléfono.</div>
     <div id="list"></div>
   </div>
   <div class="main" id="main">
     <div class="empty" id="empty"><div class="brand">FOCUS CHAT°</div><div>Elige un chat para empezar.</div></div>
     <div id="conv" class="hidden" style="display:none; flex:1; min-height:0; flex-direction:column;">
       <div class="conv-head">
-        <button class="iconbtn back" id="backBtn" aria-label="Atras"><svg viewBox="0 0 24 24"><polyline points="15 5 8 12 15 19"/></svg></button>
+        <button class="iconbtn back" id="backBtn" aria-label="Atrás"><svg viewBox="0 0 24 24"><polyline points="15 5 8 12 15 19"/></svg></button>
         <div class="av" id="cAv"></div>
         <div><div class="nm" id="cNm"></div><div class="sub" id="cSub"></div></div>
-        <button class="iconbtn aa" id="fsBtn" title="Tamano de letra" aria-label="Tamano de letra"><svg viewBox="0 0 24 24"><path d="M3 19l5-13 5 13"/><line x1="4.8" y1="14" x2="11.2" y2="14"/><path d="M13.5 19l3.5-8.5 3.5 8.5"/><line x1="14.7" y1="16.5" x2="19.3" y2="16.5"/></svg></button>
+        <button class="iconbtn aa" id="fsBtn" title="Tamaño de letra" aria-label="Tamaño de letra"><svg viewBox="0 0 24 24"><path d="M3 19l5-13 5 13"/><line x1="4.8" y1="14" x2="11.2" y2="14"/><path d="M13.5 19l3.5-8.5 3.5 8.5"/><line x1="14.7" y1="16.5" x2="19.3" y2="16.5"/></svg></button>
       </div>
       <div id="msgs"></div>
       <div id="emoPanel"><div id="emoTabs"></div><div id="emoGrid"></div></div>
@@ -470,12 +470,12 @@ async function pairLoop(){
       }catch(e){}
     }
     $('loginErr').textContent = '';
-  }catch(e){ $('loginErr').textContent = 'Sin conexion con el servidor. Reintentando... (' + String((e && e.message) || e).slice(0, 160) + ')'; }
+  }catch(e){ $('loginErr').textContent = 'Sin conexión con el servidor. Reintentando... (' + String((e && e.message) || e).slice(0, 160) + ')'; }
   setTimeout(pairLoop, 1500);
 }
 async function showLogin(){
   $('app').classList.add('hidden'); $('login').classList.remove('hidden');
-  try{ await newPair(); }catch(e){ $('loginErr').textContent = 'No se pudo generar el codigo.'; return; }
+  try{ await newPair(); }catch(e){ $('loginErr').textContent = 'No se pudo generar el código.'; return; }
   pairLoop();
 }
 
@@ -560,7 +560,7 @@ function avHtml(name, photo){ return photo ? '<img alt="" src="' + esc(photo) + 
 function renderMe(){
   $('meAv').innerHTML = avHtml(S.me.name, S.me.photo); $('meAv').title = S.me.name || '';
   const nm = String(S.me.name || '').trim();
-  $('meNm').textContent = nm || 'FOCUS CHAT\u00B0'; $('meSub').classList.toggle('hidden', !nm);
+  $('meNm').textContent = nm || 'FOCUS CHAT°'; $('meSub').classList.toggle('hidden', !nm);
 }
 function tfmt(ts){ if(!ts) return ''; const d = new Date(ts), p = function(x){ return (x < 10 ? '0' : '') + x; }; return p(d.getHours()) + ':' + p(d.getMinutes()); }
 function dayKey(ts){ const d = new Date(ts); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); }
@@ -574,12 +574,12 @@ function summary(m){
   if(!m) return '';
   const t = m.type || 'text';
   if(t === 'text' || t === 'sys') return m.text || '';
-  if(t === 'loc') return 'Ubicacion';
+  if(t === 'loc') return 'Ubicación';
   if(t === 'contact') return 'Contacto: ' + ((m.contact && m.contact.name) || '');
   if(t === 'media'){ const k = m.media && m.media.kind; return k === 'image' ? 'Foto' : k === 'video' ? 'Video' : k === 'audio' ? 'Nota de voz' : ((m.media && m.media.name) || 'Archivo'); }
   return '';
 }
-function updateTitle(){ let n = 0; Object.keys(S.chats).forEach(function(k){ n += S.chats[k].unread || 0; }); document.title = (n ? '(' + n + ') ' : '') + 'FOCUS CHAT\u00B0'; }
+function updateTitle(){ let n = 0; Object.keys(S.chats).forEach(function(k){ n += S.chats[k].unread || 0; }); document.title = (n ? '(' + n + ') ' : '') + 'FOCUS CHAT°'; }
 function renderList(){
   const q = S.q.trim().toLowerCase();
   let cs = Object.keys(S.chats).map(function(k){ return S.chats[k]; });
@@ -592,7 +592,7 @@ function renderList(){
       '<div class="row-top"><div class="row-name">' + esc(c.name) + '</div><div class="row-time">' + tfmt(c.ts) + '</div></div>' +
       '<div style="display:flex; align-items:center;"><div class="row-last" style="flex:1;">' + esc(summary(last)) + '</div>' + (c.unread ? '<span class="badge">' + c.unread + '</span>' : '') + '</div></div></div>';
   });
-  if(!cs.length) h = '<div class="empty" style="padding:40px 10px;">' + (S.ready ? 'No hay chats.' : 'Cargando chats desde el telefono...') + '</div>';
+  if(!cs.length) h = '<div class="empty" style="padding:40px 10px;">' + (S.ready ? 'No hay chats.' : 'Cargando chats desde el teléfono...') + '</div>';
   const hasArch = Object.keys(S.chats).some(function(k){ return S.chats[k].archived; });
   if(hasArch || S.showArch) h += '<div class="arch-toggle" id="archT">' + (S.showArch ? 'Volver a los chats' : 'Archivados') + '</div>';
   $('list').innerHTML = h; updateTitle();
@@ -615,13 +615,13 @@ function bubble(c, m){
   if(c.group && !me && m.who) body += '<div class="who">' + esc(m.who) + '</div>';
   if(t === 'loc' && m.loc && isFinite(m.loc.lat) && isFinite(m.loc.lon)){
     const u = 'https://maps.google.com/?q=' + m.loc.lat + ',' + m.loc.lon;
-    body += '<a class="card" href="' + u + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><span class="ic">' + ICO.pin + '</span><span><div class="nm">Ubicacion</div><div class="sz">Abrir en Google Maps</div></span></a>';
+    body += '<a class="card" href="' + u + '" target="_blank" rel="noopener noreferrer" style="text-decoration:none;"><span class="ic">' + ICO.pin + '</span><span><div class="nm">Ubicación</div><div class="sz">Abrir en Google Maps</div></span></a>';
   }else if(t === 'contact'){
     body += '<div class="card" style="cursor:default;"><span class="ic">' + ICO.user + '</span><span><div class="nm">' + esc((m.contact && m.contact.name) || 'Contacto') + '</div><div class="sz">Contacto</div></span></div>';
   }else if(t === 'media' && m.media){
     const k = mediaKind(m), ic = k === 'video' ? ICO.play : k === 'audio' ? ICO.mic : ICO.clip;
     if(m.lk && !(md && md.url)){
-      body += '<div class="card" data-unlock="' + esc(m.id) + '"><span class="ic">' + MI.lock + '</span><span><div class="nm">' + esc(m.media.name || 'Archivo') + '</div><div class="sz">Archivo con clave \u00B7 Toca para abrir</div></span></div>';
+      body += '<div class="card" data-unlock="' + esc(m.id) + '"><span class="ic">' + MI.lock + '</span><span><div class="nm">' + esc(m.media.name || 'Archivo') + '</div><div class="sz">Archivo con clave · Toca para abrir</div></span></div>';
     }else if(md && md.url){
       if(k === 'image') body += '<a href="' + md.url + '" target="_blank" rel="noopener"><img class="pic" alt="" src="' + md.url + '" onload="window.__fcImg&&window.__fcImg()"></a>';
       else if(k === 'video') body += '<video controls src="' + md.url + '"></video>';
@@ -629,7 +629,7 @@ function bubble(c, m){
       else body += '<div class="card" style="cursor:default;"><span class="ic">' + ic + '</span><span><div class="nm">' + esc(m.media.name) + '</div></span></div>';
       body += '<a class="dl" href="' + md.url + '" download="' + esc(m.media.name || 'archivo') + '">Descargar</a>';
     }else{
-      const st = md && md.err ? md.err : (md && md.loading || (!md && k !== 'file' && Number(m.media.size) <= AUTO_MAX[k]) ? 'Cargando...' : (m.media.size ? szfmt(m.media.size) + ' \u00B7 Toca para abrir' : 'Toca para abrir'));
+      const st = md && md.err ? md.err : (md && md.loading || (!md && k !== 'file' && Number(m.media.size) <= AUTO_MAX[k]) ? 'Cargando...' : (m.media.size ? szfmt(m.media.size) + ' · Toca para abrir' : 'Toca para abrir'));
       body += '<div class="card" data-media="' + esc(m.id) + '"><span class="ic">' + ic + '</span><span><div class="nm">' + esc(m.media.name || 'Archivo') + '</div><div class="sz">' + esc(st) + '</div></span></div>';
     }
   }else{
@@ -739,7 +739,7 @@ async function getMedia(id, cid, pin){
       S.reqs[req] = res; setTimeout(function(){ if(S.reqs[req]){ delete S.reqs[req]; rej(new Error('tiempo')); } }, 90000);
       send({ t: 'media', cid: c.id, mid: id, req: req, pin: pin || undefined }).catch(rej);
     });
-    if(o.t !== 'media') throw new Error(o.e === 'big' ? 'Archivo muy grande para ver aqui' : o.e === 'pin' ? 'Clave incorrecta' : o.e === 'lock' ? 'Archivo con clave' : 'El telefono ya no tiene este archivo');
+    if(o.t !== 'media') throw new Error(o.e === 'big' ? 'Archivo muy grande para ver aquí' : o.e === 'pin' ? 'Clave incorrecta' : o.e === 'lock' ? 'Archivo con clave' : 'El teléfono ya no tiene este archivo');
     const r = await fetch(CFG.url + '/storage/v1/object/public/fc/' + o.path);
     if(!r.ok) throw new Error('descarga');
     const ct = await r.arrayBuffer();
@@ -749,14 +749,14 @@ async function getMedia(id, cid, pin){
     const mime = /^[a-z]+\/[a-z0-9.+-]{1,60}$/i.test(o.mime || '') ? o.mime : 'application/octet-stream';
     S.media[id] = { url: URL.createObjectURL(new Blob([pt], { type: mime })) };
   }catch(e){
-    if(m.lk){ delete S.media[id]; toast(String(e && e.message || '').indexOf('tiempo') >= 0 ? 'El telefono no respondio.' : (e && e.message) || 'Error'); if(S.open === c.id) renderMsgs(false); return; }
-    S.media[id] = { err: String(e && e.message || '').indexOf('tiempo') >= 0 ? 'El telefono no respondio. Toca para reintentar' : (e && e.message) || 'Error' };
+    if(m.lk){ delete S.media[id]; toast(String(e && e.message || '').indexOf('tiempo') >= 0 ? 'El teléfono no respondió.' : (e && e.message) || 'Error'); if(S.open === c.id) renderMsgs(false); return; }
+    S.media[id] = { err: String(e && e.message || '').indexOf('tiempo') >= 0 ? 'El teléfono no respondió. Toca para reintentar' : (e && e.message) || 'Error' };
   }
   if(S.open === c.id) renderMsgs(false);
 }
 async function sendFile(f){
   const c = S.chats[S.open]; if(!c || !f) return;
-  if(f.size > MAXF){ toast('El archivo pesa mas de 24 MB.'); return; }
+  if(f.size > MAXF){ toast('El archivo pesa más de 24 MB.'); return; }
   toast('Enviando ' + f.name + '...');
   try{
     const raw = rnd(32), iv = rnd(12), key = await SUB.importKey('raw', raw, 'AES-GCM', false, ['encrypt']);
@@ -765,7 +765,7 @@ async function sendFile(f){
     const r = await fetch(CFG.url + '/storage/v1/object/fc/' + path, { method: 'POST', headers: hdr({ 'Content-Type': 'application/octet-stream', 'x-upsert': 'false' }), body: ct });
     if(!r.ok) throw new Error('subida ' + r.status);
     await send({ t: 'file', cid: c.id, path: path, k: b64e(raw), iv: b64e(iv), name: f.name, mime: f.type || 'application/octet-stream', size: f.size });
-    toast('Enviado al telefono. Aparecera en unos segundos.');
+    toast('Enviado al teléfono. Aparecerá en unos segundos.');
   }catch(e){ toast('No se pudo enviar el archivo.'); }
 }
 async function endSession(fromPhone){
@@ -854,7 +854,9 @@ const EMOJIS = ['\uD83D\uDC4D', '\u2764\uFE0F', '\uD83D\uDE02', '\uD83D\uDE2E', 
   '\uD83D\uDD25', '\uD83D\uDC4F', '\uD83D\uDE0D', '\uD83D\uDE0A', '\uD83D\uDE01', '\uD83E\uDD23', '\uD83D\uDE2D', '\uD83D\uDE21',
   '\uD83D\uDE18', '\uD83D\uDE09', '\uD83D\uDE0E', '\uD83E\uDD14', '\uD83D\uDE05', '\uD83D\uDE31', '\uD83E\uDD70', '\uD83D\uDE34',
   '\uD83C\uDF89', '\uD83D\uDCAF', '\u2705', '\uD83D\uDC4C', '\uD83D\uDE4C', '\uD83D\uDCAA', '\uD83D\uDC4E', '\uD83D\uDC94'];
-function mdlClose(){ const e = $('mdl'); if(e) e.remove(); }
+let camStream = null;
+function camStop(){ if(camStream){ try{ camStream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} camStream = null; } }
+function mdlClose(){ const e = $('mdl'); if(e) e.remove(); camStop(); }
 function mdlOpen(title, node, btns){
   mdlClose(); ctxClose();
   const o = document.createElement('div'); o.id = 'mdl';
@@ -896,9 +898,9 @@ function fwdMsgs(ids){
 }
 function delMsgs(ids){
   const c = S.chats[S.open]; if(!c || !ids.length) return;
-  mdlOpen('Eliminar', txtNode(ids.length === 1 ? '\u00BFEliminar este mensaje? Tambien se borra del telefono.' : '\u00BFEliminar ' + ids.length + ' mensajes? Tambien se borran del telefono.'), [
+  mdlOpen('Eliminar', txtNode(ids.length === 1 ? '¿Eliminar este mensaje? También se borra del teléfono.' : '¿Eliminar ' + ids.length + ' mensajes? También se borran del teléfono.'), [
     { l: 'Cancelar' },
-    { l: 'Si, eliminar', k: 'dng', f: async function(){
+    { l: 'Sí, eliminar', k: 'dng', f: async function(){
       try{ await send({ t: 'del', cid: c.id, mids: ids }); }catch(e){ toast('No se pudo eliminar.'); return; }
       dropMsgs(c, ids); toast('Mensaje eliminado');
     } }
@@ -933,7 +935,7 @@ function lockMsg(m){
       send({ t: 'lock', act: 'remove', cid: c.id, mid: m.id, pin: i.value }).catch(function(){ toast('No se pudo enviar.'); });
     } }]);
   }else{
-    box.appendChild(txtNode('Elige una clave de 4 o mas caracteres. Solo oculta el archivo; no impide eliminarlo.'));
+    box.appendChild(txtNode('Elige una clave de 4 o más caracteres. Solo oculta el archivo; no impide eliminarlo.'));
     const i1 = pinInput('Clave'), i2 = pinInput('Repite la clave'); box.appendChild(i1); box.appendChild(i2);
     mdlOpen('Poner clave', box, [{ l: 'Cancelar' }, { l: 'Poner clave', k: 'pri', f: function(){
       if(i1.value.length < 4){ toast('Usa al menos 4 caracteres.'); return false; }
@@ -982,12 +984,12 @@ function fsMenu(){
   const cur = fsGet(), box = document.createElement('div');
   const AA = '<svg viewBox="0 0 24 24"><path d="M3 19l5-13 5 13"/><line x1="4.8" y1="14" x2="11.2" y2="14"/><path d="M13.5 19l3.5-8.5 3.5 8.5"/><line x1="14.7" y1="16.5" x2="19.3" y2="16.5"/></svg>';
   const OK = '<svg viewBox="0 0 24 24"><polyline points="5 12.5 10 17.5 19 7.5"/></svg>';
-  [['s', 'Pequeno'], ['m', 'Mediano'], ['l', 'Grande']].forEach(function(o){
+  [['s', 'Pequeño'], ['m', 'Mediano'], ['l', 'Grande']].forEach(function(o){
     const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.innerHTML = (cur === o[0] ? OK : AA) + '<span>' + o[1] + '</span>';
     b.addEventListener('click', function(){ mdlClose(); fsSet(o[0]); });
     box.appendChild(b);
   });
-  mdlOpen('Tamano de letra', box, [{ l: 'Cancelar' }]);
+  mdlOpen('Tamaño de letra', box, [{ l: 'Cancelar' }]);
 }
 $('fsBtn').addEventListener('click', fsMenu);
 fsApply();
@@ -1011,7 +1013,7 @@ function selBar(){
     $('selDl').addEventListener('click', async function(){
       const c = S.chats[S.open]; if(!c) return;
       const l = c.msgs.filter(function(m){ return S.sel && S.sel[m.id] && m.type === 'media'; });
-      if(!l.length){ toast('Ningun archivo seleccionado.'); return; }
+      if(!l.length){ toast('Ningún archivo seleccionado.'); return; }
       selEnd(); for(let i = 0; i < l.length; i++) await downloadMsg(l[i]);
     });
   }
@@ -1072,9 +1074,9 @@ $('msgs').addEventListener('click', function(e){
 });
 $('copyCode').addEventListener('click', function(e){
   e.preventDefault(); if(!pair || !pair.code) return;
-  const done = function(){ toast('Codigo copiado. Pegalo en la app.'); };
-  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pair.code).then(done, function(){ prompt('Copia este codigo:', pair.code); });
-  else prompt('Copia este codigo:', pair.code);
+  const done = function(){ toast('Código copiado. Pégalo en la app.'); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pair.code).then(done, function(){ prompt('Copia este código:', pair.code); });
+  else prompt('Copia este código:', pair.code);
 });
 $('sendBtn').addEventListener('click', sendText);
 $('txt').addEventListener('keydown', function(e){ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendText(); } });
@@ -1115,15 +1117,47 @@ $('emoBtn').addEventListener('click', function(){
 });
 $('emoTabs').addEventListener('click', function(e){ const b = e.target.closest('button'); if(b){ emoCat = +b.getAttribute('data-i'); emoRender(); } });
 $('emoGrid').addEventListener('click', function(e){ const b = e.target.closest('button'); if(b) emoPick(b.textContent); });
-$('attBtn').addEventListener('click', function(){ $('file').click(); });
+/* ---------- adjuntar: archivo o cámara del computador ---------- */
+function attMenu(){
+  const box = document.createElement('div');
+  const CLIP = '<svg viewBox="0 0 24 24"><path d="M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L9.5 17.2a1.7 1.7 0 0 1-2.4-2.4L14.5 7.5"/></svg>';
+  const CAM = '<svg viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.4h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></svg>';
+  [['Archivo', CLIP, function(){ $('file').click(); }], ['Cámara', CAM, camOpen]].forEach(function(o){
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'; b.innerHTML = o[1] + '<span>' + o[0] + '</span>';
+    b.addEventListener('click', function(){ mdlClose(); o[2](); });
+    box.appendChild(b);
+  });
+  mdlOpen('Adjuntar', box, [{ l: 'Cancelar' }]);
+}
+async function camOpen(){
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast('Este navegador no permite usar la cámara.'); return; }
+  let st;
+  try{ st = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false }); }
+  catch(e){ toast('No se pudo abrir la cámara. Revisa el permiso del navegador.'); return; }
+  const box = document.createElement('div');
+  const v = document.createElement('video'); v.autoplay = true; v.muted = true; v.playsInline = true; v.srcObject = st;
+  v.style.cssText = 'width:100%; border-radius:16px; background:#000; display:block;';
+  box.appendChild(v);
+  mdlOpen('Cámara', box, [
+    { l: 'Cancelar' },
+    { l: 'Tomar foto', k: 'pri', f: function(){
+      if(!v.videoWidth){ toast('La cámara aún no está lista.'); return false; }
+      const cv = document.createElement('canvas'); cv.width = v.videoWidth; cv.height = v.videoHeight;
+      cv.getContext('2d').drawImage(v, 0, 0);
+      cv.toBlob(function(b){ if(b) sendFile(new File([b], 'foto-' + Date.now() + '.jpg', { type: 'image/jpeg' })); }, 'image/jpeg', 0.92);
+    } }
+  ]);
+  camStream = st;     // se asigna después de mdlOpen (que llama a mdlClose y apagaría la cámara)
+}
+$('attBtn').addEventListener('click', attMenu);
 $('file').addEventListener('change', function(){ const f = this.files && this.files[0]; this.value = ''; sendFile(f); });
 $('backBtn').addEventListener('click', function(){ document.body.classList.remove('conv'); });
-$('outBtn').addEventListener('click', function(){ if(confirm('Cerrar la sesion en este computador?')) endSession(false); });
+$('outBtn').addEventListener('click', function(){ if(confirm('¿Cerrar la sesión en este computador?')) endSession(false); });
 
 /* ---------- arranque ---------- */
 (async function(){
   if(!CFG.url || !CFG.key){ document.body.innerHTML = '<div class="empty" style="height:100%">Falta chat-config.js (url y key del servidor).</div>'; return; }
-  if(!window.crypto || !crypto.subtle){ document.body.innerHTML = '<div class="empty" style="height:100%">Este navegador no permite el cifrado. Abre la pagina con https:// o desde el archivo local.</div>'; return; }
+  if(!window.crypto || !crypto.subtle){ document.body.innerHTML = '<div class="empty" style="height:100%">Este navegador no permite el cifrado. Abre la página con https:// o desde el archivo local.</div>'; return; }
   let sess = null;
   try{ sess = JSON.parse(localStorage.getItem(SKEY) || 'null'); }catch(e){}
   if(sess && /^[0-9a-f]{20}$/.test(sess.sid || '') && sess.k){
