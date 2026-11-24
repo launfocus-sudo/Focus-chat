@@ -27,14 +27,14 @@
   <li><b>Perfil:</b> el nombre y la foto que tú eliges, y un código de usuario aleatorio (FC + 8 caracteres) que sirve para que otros te escriban. No pedimos correo, teléfono ni contraseña de cuenta.</li>
   <li><b>Mensajes y archivos:</b> texto, fotos, videos, audios, documentos, ubicación y contactos que tú decides enviar. Viajan cifrados de extremo a extremo; el servidor no puede leer su contenido.</li>
   <li><b>Claves de cifrado:</b> se crean en tu dispositivo. Solo la clave pública se comparte con el servidor.</li>
-  <li><b>Avisos de mensaje (opcional):</b> si activas las notificaciones, un servicio de la app revisa periódicamente el servidor con tu código de usuario para saber si tienes mensajes nuevos. No usamos servicios de notificaciones push de terceros ni identificadores publicitarios; el aviso solo muestra el nombre del contacto y “Nuevo mensaje”.</li>
+  <li><b>Avisos de mensaje (opcional):</b> si activas las notificaciones, un servicio de la app revisa periódicamente el servidor con tu código de usuario y tu clave secreta de acceso para saber si tienes mensajes nuevos. No usamos servicios de notificaciones push de terceros ni identificadores publicitarios; el aviso solo muestra el nombre del contacto y “Nuevo mensaje”.</li>
 </ul>
 
 <h2>2. Cómo se guardan</h2>
 <ul>
   <li>Tu historial de chats, fotos y archivos se guarda <b>en tu teléfono</b>.</li>
   <li>El servidor guarda tu <b>perfil</b> (nombre, foto, código de usuario y clave pública) mientras tengas cuenta, para que tus contactos puedan encontrarte. Se borra al eliminar tu perfil.</li>
-  <li>Aparte del perfil, el servidor solo guarda de forma temporal los mensajes y archivos <b>cifrados</b> que aún no se han entregado, y los borra cuando el destinatario los recibe.</li>
+  <li>Aparte del perfil, el servidor solo guarda de forma temporal los mensajes y archivos <b>cifrados</b> que aún no se han entregado, junto con los códigos de usuario del remitente y del destinatario y la fecha de envío. Los borra cuando el destinatario los recibe o cuando se elimina el perfil del destinatario.</li>
   <li>Si vinculas un computador con el código QR, los mensajes se siguen enviando cifrados y el teléfono debe tener FOCUS CHAT abierto. Puedes cerrar esa sesión en Ajustes › Dispositivos vinculados.</li>
 </ul>
 
@@ -57,7 +57,7 @@
 <p>El envío de mensajes cifrados usa un servidor en la nube (Supabase). Los mapas usan OpenStreetMap y CARTO. Cada proveedor tiene su propia política de privacidad.</p>
 
 <h2>6. Seguridad y abuso</h2>
-<p>Puedes bloquear o reportar a un contacto desde la información del chat. Los reportes se envían por correo a la dirección de contacto de abajo.</p>
+<p>Puedes bloquear o reportar a un contacto desde la información del chat. Los reportes se envían por correo a la dirección de contacto de abajo y se conservan solo el tiempo necesario para atenderlos.</p>
 
 <h2>7. Menores</h2>
 <p>FOCUS CHAT° no está dirigida a menores de 13 años y no recopilamos datos de ellos a sabiendas.</p>
@@ -68,8 +68,8 @@
   <li>Abre la app y entra a <b>Ajustes</b> (icono de controles).</li>
   <li>Toca <b>Eliminar mi perfil y mis datos</b> y confirma.</li>
 </ol>
-<p><b>Qué se borra:</b> tu perfil (nombre, foto y código de usuario), tus claves de cifrado, los mensajes y archivos cifrados pendientes en el servidor, los dispositivos vinculados y los chats guardados en ese teléfono. El borrado es inmediato.</p>
-<p><b>Qué se conserva:</b> nada. No guardamos copias de tus datos. Los mensajes que ya recibieron otras personas quedan en los teléfonos de ellas, porque no están en nuestro servidor.</p>
+<p><b>Qué se borra:</b> tu perfil (nombre, foto y código de usuario), tus claves de cifrado, los mensajes cifrados pendientes en el servidor, los dispositivos vinculados y los chats guardados en ese teléfono. Los archivos cifrados pendientes se eliminan del servidor al ser descargados por el destinatario. El borrado del perfil se hace al confirmar, sin esperas.</p>
+<p><b>Qué se conserva:</b> no guardamos copias de tus datos. Solo se conservan los correos que nos hayas enviado (por ejemplo, reportes o solicitudes de borrado) durante el tiempo necesario para atenderlos. Los mensajes que ya recibieron otras personas quedan en los teléfonos de ellas, porque no están en nuestro servidor.</p>
 <p><b>Borrar solo una parte:</b> también puedes eliminar mensajes, fotos y archivos concretos desde cada chat, sin borrar tu cuenta.</p>
 <p>Si ya no tienes la app, escribe a <a href="mailto:launfocus@gmail.com?subject=Eliminar%20mis%20datos%20FOCUS%20CHAT">launfocus@gmail.com</a> indicando tu código de usuario (FC…), y borraremos los datos asociados.</p>
 
