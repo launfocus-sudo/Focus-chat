@@ -89,7 +89,7 @@
   .rcring{ width:11px; height:11px; vertical-align:-1px; display:inline-block; } .card .nm{ font-weight:600; font-size:14px; word-break:break-all; } .card .sz{ font-size:12px; color:var(--muted); }
   .b img.pic, .b video{ max-width:100%; max-height:340px; border-radius:12px; display:block; }
   .b audio{ width:260px; max-width:100%; }
-  .dl{ display:inline-block; margin-top:6px; font-size:13px; }
+  .dl{ display:inline-block; margin-top:6px; font-size:11px; }
   .composer{ display:flex; gap:10px; align-items:flex-end; padding:12px 20px 16px; border-top:1px solid var(--line); }
   .composer textarea{ flex:1; resize:none; max-height:140px; border:0; outline:0; border-radius:20px; padding:12px 16px; background:var(--bg); color:var(--text); font:inherit;
     box-shadow:inset 3px 3px 7px var(--sh-d), inset -3px -3px 7px var(--sh-l); }
@@ -661,7 +661,7 @@ function bubble(c, m){
       body += '<div class="card" data-unlock="' + esc(m.id) + '"><span class="ic">' + MI.lock + '</span><span><div class="nm">' + esc(m.media.name || 'Archivo') + '</div><div class="sz">Archivo con clave · Toca para abrir</div></span></div>';
     }else if(md && md.url){
       if(k === 'image') body += '<a href="' + md.url + '" target="_blank" rel="noopener"><img class="pic" alt="" src="' + md.url + '" onload="window.__fcImg&&window.__fcImg()"></a>';
-      else if(k === 'video') body += '<video controls src="' + md.url + '"></video>';
+      else if(k === 'video') body += '<video controls preload="metadata" playsinline src="' + md.url + '#t=0.1"></video>';
       else if(k === 'audio') body += '<audio controls src="' + md.url + '"></audio>';
       else if(isPdf(m)) body += pdfCard(m, md);
       else body += '<div class="card" style="cursor:default;"><span class="ic">' + ic + '</span><span><div class="nm">' + esc(m.media.name) + '</div></span></div>';
