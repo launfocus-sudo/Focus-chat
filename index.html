@@ -59,6 +59,7 @@
   .row-top{ display:flex; gap:8px; align-items:baseline; }
   .row-name{ flex:1; min-width:0; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .row-time{ font-size:12px; color:var(--muted); flex:none; }
+  .row-tag{ font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .row-last{ color:var(--muted); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .badge{ background:var(--accent); color:var(--bg); border-radius:11px; min-width:21px; height:21px; font-size:12px; display:inline-flex; align-items:center; justify-content:center; padding:0 6px; margin-left:6px; flex:none; }
   .arch-toggle{ text-align:center; padding:10px; color:var(--muted); font-size:13px; cursor:pointer; }
@@ -376,12 +377,12 @@ const ICO = {
 };
 /* Aro de estado de la app (1/3 salio, 2/3 llego, 3/3 leido): cada tercio es un arco, los que faltan quedan tenues */
 function ringSvg(lv){
-  const R = 5.2, C = 7, gap = 14, arcs = [];
+  const R = 5.2, C = 7, gap = 16, arcs = [];
   for(let i = 0; i < 3; i++){
     const a0 = (-90 + 120 * i + gap / 2) * Math.PI / 180, a1 = (-90 + 120 * (i + 1) - gap / 2) * Math.PI / 180;
     arcs.push('<path d="M' + (C + R * Math.cos(a0)).toFixed(2) + ' ' + (C + R * Math.sin(a0)).toFixed(2) + 'A' + R + ' ' + R + ' 0 0 1 ' + (C + R * Math.cos(a1)).toFixed(2) + ' ' + (C + R * Math.sin(a1)).toFixed(2) + '"' + (i < lv ? '' : ' opacity=".25"') + '/>');
   }
-  return '<svg class="rcring" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">' + arcs.join('') + '</svg>';
+  return '<svg class="rcring" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="butt" aria-hidden="true">' + arcs.join('') + '</svg>';
 }
 const esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
 const SUB = crypto.subtle, LK_INFO = 'focus-link-v1', MAXF = 100 * 1024 * 1024, CHUNK = 24 * 1024 * 1024;
@@ -534,7 +535,7 @@ function handle(o){
   if(t === 'ready'){ S.ready = true; renderList(); return; }
   if(t === 'chat'){
     const c = chatOf(o.c.id), m = o.c;
-    c.name = m.name; c.group = !!m.group; c.ts = m.ts || 0; c.unread = m.unread || 0; c.pinned = !!m.pinned; c.archived = !!m.archived;
+    c.name = m.name; c.group = !!m.group; c.ts = m.ts || 0; c.unread = m.unread || 0; c.pinned = !!m.pinned; c.archived = !!m.archived; c.tag = c.group ? '' : String(m.tag || '').slice(0, 20);
     if(m.photo !== undefined) c.photo = m.photo;
     if(S.open === c.id && c.unread){ c.unread = 0; send({ t: 'read', cid: c.id }).catch(function(){}); }
     mergeMsgs(c, o.ms); renderList(); if(S.open === c.id) renderMsgs(true); updateTitle(); return;
@@ -610,7 +611,7 @@ function renderList(){
   cs.forEach(function(c){
     const last = c.msgs.length ? c.msgs[c.msgs.length - 1] : null;
     h += '<div class="row' + (c.id === S.open ? ' sel' : '') + '" data-id="' + esc(c.id) + '"><div class="av">' + avHtml(c.name, c.photo) + '</div><div class="row-mid">' +
-      '<div class="row-top"><div class="row-name">' + esc(c.name) + '</div><div class="row-time">' + tfmt(c.ts) + '</div></div>' +
+      '<div class="row-top"><div class="row-name">' + esc(c.name) + '</div><div class="row-time">' + tfmt(c.ts) + '</div></div>' + (c.tag ? '<div class="row-tag">' + esc(c.tag) + '</div>' : '') +
       '<div style="display:flex; align-items:center;"><div class="row-last" style="flex:1;">' + esc(summary(last)) + '</div>' + (c.unread ? '<span class="badge">' + c.unread + '</span>' : '') + '</div></div></div>';
   });
   if(!cs.length) h = '<div class="empty" style="padding:40px 10px;">' + (S.ready ? 'No hay chats.' : 'Cargando chats desde el teléfono...') + '</div>';
@@ -724,7 +725,7 @@ function openChat(id){
   S.open = id; document.body.classList.add('conv');
   $('empty').classList.add('hidden'); $('empty').style.display = 'none';
   const cv = $('conv'); cv.classList.remove('hidden'); cv.style.display = 'flex';
-  $('cAv').innerHTML = avHtml(c.name, c.photo); $('cNm').textContent = c.name; $('cSub').textContent = c.group ? 'Grupo' : '';
+  $('cAv').innerHTML = avHtml(c.name, c.photo); $('cNm').textContent = c.name; $('cSub').textContent = c.group ? 'Grupo' : (c.tag || '');
   if(c.unread){ c.unread = 0; send({ t: 'read', cid: id }).catch(function(){}); }
   renderList(); renderMsgs('force'); $('txt').focus();
 }
