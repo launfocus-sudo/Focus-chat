@@ -48,7 +48,10 @@
   .search{ margin:6px 16px 12px; }
   .search input{ width:100%; border:0; outline:0; border-radius:20px; padding:11px 16px; background:var(--bg); color:var(--text);
     box-shadow:inset 3px 3px 7px var(--sh-d), inset -3px -3px 7px var(--sh-l); font:inherit; }
-  #list{ flex:1; overflow:auto; padding:2px 10px 12px; }
+  /* [fadelist] la lista se difumina arriba y abajo para que las tarjetas no se vean cortadas en seco */
+  #list{ flex:1; overflow:auto; padding:14px 10px 34px; box-sizing:border-box;
+    -webkit-mask-image:linear-gradient(to bottom, transparent 0, rgba(0,0,0,.5) 16px, #000 44px, #000 calc(100% - 44px), rgba(0,0,0,.5) calc(100% - 16px), transparent 100%);
+    mask-image:linear-gradient(to bottom, transparent 0, rgba(0,0,0,.5) 16px, #000 44px, #000 calc(100% - 44px), rgba(0,0,0,.5) calc(100% - 16px), transparent 100%); }
   .row{ display:flex; gap:12px; align-items:center; padding:10px 10px; border-radius:16px; cursor:pointer; margin-bottom:4px; }
   .row:hover{ background:rgba(127,127,127,.09); }
   .row.sel{ background:var(--card); box-shadow:inset 2px 2px 6px var(--sh-d), inset -2px -2px 6px var(--sh-l); }
@@ -80,6 +83,14 @@
   .b.them{ align-self:flex-start; }
   .b .who{ font-size:12px; font-weight:600; color:var(--accent); margin-bottom:2px; }
   .b .txt{ white-space:pre-wrap; }
+  .b .rp{ border-left:3px solid var(--accent); background:rgba(127,127,127,.14); border-radius:8px; padding:4px 9px; margin:0 0 6px; cursor:pointer; overflow:hidden; }
+  .b .rp b{ display:block; font-size:.78em; color:var(--accent); }
+  .b .rp span{ display:block; font-size:.9em; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #rpBar{ display:flex; align-items:center; gap:10px; padding:8px 20px 0; }
+  #rpBar .rp{ flex:1; min-width:0; border-left:3px solid var(--accent); background:rgba(127,127,127,.14); border-radius:8px; padding:4px 9px; }
+  #rpBar .rp b{ display:block; font-size:.78em; color:var(--accent); }
+  #rpBar .rp span{ display:block; font-size:.9em; opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #rpBar.hidden{ display:none; }
   .b a{ color:inherit; text-decoration:underline; }
   .b .ct{ text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
   .b .meta{ font-size:11px; color:var(--accent); opacity:.9; text-align:right; margin-top:2px; user-select:none; }
@@ -223,6 +234,7 @@
       </div>
       <div id="msgs"></div>
       <div id="emoPanel"><div id="emoTabs"></div><div id="emoGrid"></div></div>
+      <div id="rpBar" class="hidden"></div>
       <div class="composer">
         <button class="iconbtn" id="attBtn" title="Adjuntar archivo" aria-label="Adjuntar"><svg viewBox="0 0 24 24"><path d="M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7L9.5 17.2a1.7 1.7 0 0 1-2.4-2.4L14.5 7.5"/></svg></button>
         <input type="file" id="file" class="hidden" multiple>
@@ -395,8 +407,13 @@ function rnd(n){ return crypto.getRandomValues(new Uint8Array(n)); }
 function hex(n){ return Array.prototype.map.call(rnd(n), function(x){ return (x < 16 ? '0' : '') + x.toString(16); }).join(''); }
 function toast(t){ const e = $('toast'); e.textContent = t; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(function(){ e.classList.remove('on'); }, 2600); }
 function hdr(extra){ const h = { apikey: CFG.key }; if(/^eyJ/.test(CFG.key)) h.Authorization = 'Bearer ' + CFG.key; if(extra) for(const k in extra) h[k] = extra[k]; return h; }
-async function rpc(fn, args){
-  const r = await fetch(CFG.url + '/rest/v1/rpc/' + fn, { method: 'POST', headers: hdr({ 'Content-Type': 'application/json' }), body: JSON.stringify(args) });
+async function rpc(fn, args, ms){
+  /* [robusto] tiempo maximo: un fetch colgado (red que cae, suspension del PC) nunca congela el vinculo */
+  const ac = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const to = ac ? setTimeout(function(){ try{ ac.abort(); }catch(e){} }, ms || 20000) : 0;
+  let r;
+  try{ r = await fetch(CFG.url + '/rest/v1/rpc/' + fn, { method: 'POST', headers: hdr({ 'Content-Type': 'application/json' }), body: JSON.stringify(args), signal: ac ? ac.signal : undefined }); }
+  finally{ if(to) clearTimeout(to); }
   if(!r.ok){ let m = ''; try{ const j = await r.json(); m = j.message || ''; }catch(e){} throw new Error(m || ('http ' + r.status)); }
   const t = await r.text(); return t ? JSON.parse(t) : null;
 }
@@ -449,7 +466,46 @@ function drawQR(canvas, text){
 const S = { sid: '', key: null, ack: 0, chats: {}, me: { name: '', photo: '' }, open: '', lastPhone: 0, ready: false, media: {}, reqs: {}, showArch: false, q: '' };
 let pair = null, loopT = 0, pingT = 0;
 
-function saveSess(){ try{ localStorage.setItem(SKEY, JSON.stringify({ sid: S.sid, k: S.k, ack: S.ack })); }catch(e){} }
+/* [robusto] La sesion se guarda en localStorage Y en IndexedDB (copia). Solo se borra al cerrar sesion a proposito
+   (boton o aviso del telefono), nunca por un error de red ni por recargar la pagina. */
+function idbOpen(){ return new Promise(function(res, rej){ try{ const r = indexedDB.open('fcweb', 1); r.onupgradeneeded = function(){ r.result.createObjectStore('kv'); }; r.onsuccess = function(){ res(r.result); }; r.onerror = function(){ rej(r.error); }; }catch(e){ rej(e); } }); }
+async function idbGet(k){ try{ const d = await idbOpen(); return await new Promise(function(res){ const q = d.transaction('kv').objectStore('kv').get(k); q.onsuccess = function(){ res(q.result); }; q.onerror = function(){ res(undefined); }; }); }catch(e){ return undefined; } }
+async function idbSet(k, v){ try{ const d = await idbOpen(); await new Promise(function(res){ const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = res; t.onabort = res; }); }catch(e){} }
+async function idbDel(k){ try{ const d = await idbOpen(); await new Promise(function(res){ const t = d.transaction('kv', 'readwrite'); t.objectStore('kv').delete(k); t.oncomplete = res; t.onerror = res; t.onabort = res; }); }catch(e){} }
+function saveSess(){ const v = JSON.stringify({ sid: S.sid, k: S.k, ack: S.ack }); try{ localStorage.setItem(SKEY, v); }catch(e){} idbSet(SKEY, v); }
+function sessOk(x){ return !!x && /^[0-9a-f]{20}$/.test(x.sid || '') && !!x.k; }
+async function loadSess(){
+  let a = null, b = null;
+  try{ a = JSON.parse(localStorage.getItem(SKEY) || 'null'); }catch(e){}
+  try{ b = JSON.parse(await idbGet(SKEY) || 'null'); }catch(e){}
+  if(sessOk(a) && sessOk(b) && a.sid === b.sid) return (Number(b.ack) || 0) > (Number(a.ack) || 0) ? b : a;
+  return sessOk(a) ? a : (sessOk(b) ? b : null);
+}
+/* copia cifrada (con la clave de la sesion) de los chats: al recargar se ven al instante, aunque el telefono tarde en responder */
+let cacheT = 0;
+function cacheSave(now){
+  clearTimeout(cacheT);
+  const go = async function(){
+    if(!S.key) return;
+    try{
+      const slim = {};
+      Object.keys(S.chats).forEach(function(k){ const c = S.chats[k]; slim[k] = Object.assign({}, c, { msgs: (c.msgs || []).filter(function(m){ return m.st !== 'sending'; }).slice(-40) }); });
+      await idbSet('cache', await seal(S.key, { chats: slim, me: S.me, ts: Date.now() }));
+    }catch(e){}
+  };
+  if(now) go(); else cacheT = setTimeout(go, 1500);
+}
+async function cacheLoad(key){
+  try{ const s = await idbGet('cache'); if(!s) return false; const o = await open(key, s); if(o && o.chats){ S.chats = o.chats; S.me = o.me || S.me; S.cached = true; return true; } }catch(e){}
+  return false;
+}
+function bgInterval(fn, ms){      /* reloj en un Worker: el navegador no lo espacia aunque la pestana quede oculta */
+  try{
+    const w = new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(1)},' + ms + ')'], { type: 'text/javascript' })));
+    w.onmessage = function(){ try{ fn(); }catch(e){} };
+    return w;
+  }catch(e){ return setInterval(fn, ms); }
+}
 
 /* ---------- vincular (mostrar QR y esperar al telefono) ---------- */
 async function newPair(){
@@ -490,33 +546,75 @@ async function showLogin(){
 }
 
 /* ---------- conectado ---------- */
-async function send(o){ await rpc('fc_link_send', { p_sid: S.sid, p_dir: 'd', p_body: await seal(S.key, o) }); }
+async function send(o){
+  const body = await seal(S.key, o);
+  for(let i = 0; ; i++){
+    try{ await rpc('fc_link_send', { p_sid: S.sid, p_dir: 'd', p_body: body }); return; }
+    catch(e){ if(i >= 2 || !(e instanceof TypeError)) throw e; await new Promise(function(r){ setTimeout(r, 500 * (i + 1)); }); }   // TypeError = sin red: no llego, se puede repetir sin duplicar
+  }
+}
 async function connect(key){
-  S.key = key; S.chats = {}; S.ready = false; S.lastPhone = Date.now();
+  S.key = key; S.chats = {}; S.ready = false; S.seen = {}; S.cached = false; S.lastPhone = Date.now(); S.lastSync = Date.now();
+  const had = await cacheLoad(key);
   $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+  if(had){ try{ renderMe(); }catch(e){} }
   renderList();
   try{ await send({ t: 'dev', name: devName() }); await send({ t: 'sync' }); }catch(e){}
-  clearInterval(pingT); pingT = setInterval(function(){ send({ t: 'ping' }).catch(function(){}); }, 8000);
-  loop();
+  nextAt = 0; loop();
 }
+/* [robusto] Motor de conexion: un reloj en Worker (no se frena en pestanas ocultas) lanza la vuelta de lectura, el latido y la
+   vigilancia. Errores de red -> reintento con espera creciente; al volver internet / la pestana, se reintenta al instante. */
+let loopBusy = false, loopLast = 0, loopFail = 0, nextAt = 0, lastPing = 0;
 async function loop(){
-  clearTimeout(loopT);
   if(!S.key) return;
-  let more = false;
+  if(loopBusy && Date.now() - loopLast < 30000) return;
+  loopBusy = true; loopLast = Date.now();
+  let more = false, ok = false;
   try{
     const rows = await rpc('fc_link_pull', { p_sid: S.sid, p_dir: 'p', p_ack: S.ack });
+    ok = true; loopFail = 0; S.srvOk = Date.now();
     for(let i = 0; i < (rows || []).length; i++){
       S.ack = Math.max(S.ack, Number(rows[i].id));
       try{ const o = await open(S.key, rows[i].body); S.lastPhone = Date.now(); handle(o); }catch(e){}
-      if(!S.key) return;
+      if(!S.key){ loopBusy = false; return; }
     }
     if((rows || []).length) saveSess();
     more = (rows || []).length >= 60;
-  }catch(e){}
-  loopT = setTimeout(loop, more ? 100 : (document.hidden ? 5000 : 1500));
+  }catch(e){ loopFail++; }
+  loopBusy = false;
+  nextAt = Date.now() + (!ok ? Math.min(15000, 1000 * Math.pow(2, Math.min(loopFail, 4))) + Math.random() * 400 : more ? 100 : (document.hidden ? 3000 : 1200));
 }
-setInterval(function(){ if(S.key) $('banner').classList.toggle('hidden', Date.now() - S.lastPhone < 25000); }, 3000);
-document.addEventListener('visibilitychange', function(){ if(!document.hidden && S.key) loop(); });
+function kickNow(){ nextAt = 0; loopFail = 0; if(S.key){ loop(); if(Date.now() - S.lastPhone > 45000) askSync(true); } }
+function askSync(force){
+  if(!S.key) return;
+  const now = Date.now();
+  if(!force && now - S.lastSync < 15000) return;
+  S.lastSync = now; send({ t: 'sync' }).catch(function(){});
+}
+function connTick(){
+  if(!S.key) return;
+  const now = Date.now();
+  if(now >= nextAt && !(loopBusy && now - loopLast < 30000)) loop();
+  if(loopBusy && now - loopLast >= 30000) loopBusy = false;      // vuelta colgada: se libera
+  const silent = now - S.lastPhone;
+  /* latido: cada 8 s si el telefono responde; si calla, "sync" cada vez mas espaciado (no llena el buzon) */
+  const every = silent < 40000 ? 8000 : silent < 300000 ? 30000 : 90000;
+  if(now - lastPing >= every){
+    lastPing = now;
+    if(silent < 40000) send({ t: 'ping' }).catch(function(){}); else { S.lastSync = now; send({ t: 'sync' }).catch(function(){}); }
+  }
+  const b = $('banner');
+  const srvDown = loopFail >= 2 || (navigator.onLine === false);
+  if(srvDown){ b.textContent = 'Sin internet o sin acceso al servidor. Reintentando automáticamente...'; b.classList.remove('hidden'); }
+  else if(silent > 40000){ b.textContent = 'El teléfono no responde. Reintentando automáticamente... (debe tener internet y FOCUS CHAT activo)'; b.classList.remove('hidden'); }
+  else b.classList.add('hidden');
+}
+bgInterval(connTick, 500);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) kickNow(); else { try{ if(S.key) saveSess(); cacheSave(true); }catch(e){} } });
+window.addEventListener('online', kickNow);
+window.addEventListener('focus', kickNow);
+window.addEventListener('pageshow', kickNow);
+window.addEventListener('pagehide', function(){ try{ if(S.key) saveSess(); cacheSave(true); }catch(e){} });
 
 /* ---------- mensajes del telefono ---------- */
 function chatOf(id){ return S.chats[id] || (S.chats[id] = { id: id, name: '', group: false, ts: 0, unread: 0, pinned: false, archived: false, photo: '', msgs: [], more: true }); }
@@ -526,15 +624,16 @@ function mergeMsgs(c, ms, tmp){
   (ms || []).forEach(function(m){ if(idx[m.id] !== undefined) c.msgs[idx[m.id]] = m; else { idx[m.id] = c.msgs.length; c.msgs.push(m); } });
   c.msgs.sort(function(a, b){ return (a.ts || 0) - (b.ts || 0); });
 }
-function handle(o){
+function handle(o){ handle0(o); if(o && o.t !== 'ping' && S.key) cacheSave(); }
+function handle0(o){
   const t = o && o.t;
   if(t === 'ping') return;
   if(t === 'bye'){ endSession(true); return; }
   if(t === 'me'){ S.me = { name: o.name || '', photo: o.photo || '' }; applyTheme(o.theme); renderMe(); return; }
   if(t === 'theme'){ applyTheme(o.theme); return; }
-  if(t === 'ready'){ S.ready = true; renderList(); return; }
+  if(t === 'ready'){ S.ready = true; if(S.cached){ S.cached = false; Object.keys(S.chats).forEach(function(k){ if(!S.seen[k]) delete S.chats[k]; }); } renderList(); return; }
   if(t === 'chat'){
-    const c = chatOf(o.c.id), m = o.c;
+    const c = chatOf(o.c.id), m = o.c; if(S.seen) S.seen[o.c.id] = 1;
     c.name = m.name; c.group = !!m.group; c.ts = m.ts || 0; c.unread = m.unread || 0; c.pinned = !!m.pinned; c.archived = !!m.archived; c.tag = c.group ? '' : String(m.tag || '').slice(0, 20);
     if(m.photo !== undefined) c.photo = m.photo;
     if(S.open === c.id && c.unread){ c.unread = 0; send({ t: 'read', cid: c.id }).catch(function(){}); }
@@ -650,6 +749,7 @@ function bubble(c, m){
   let body = '', big = false;
   if(m.via) body += '<div class="who" style="font-style:italic;font-weight:400">Enviado desde ' + esc(m.via) + '</div>';
   if(m.fwd) body += '<div class="who" style="font-style:italic;font-weight:400">Reenviado</div>';
+  if(m.rp) body += '<div class="rp" data-rp="' + esc(m.rp.id) + '"><b>' + esc(m.rp.who || '') + '</b><span>' + esc(m.rp.txt || '') + '</span></div>';
   if(c.group && !me && m.who) body += '<div class="who">' + esc(m.who) + '</div>';
   if(t === 'loc' && m.loc && isFinite(m.loc.lat) && isFinite(m.loc.lon)){
     const u = 'https://maps.google.com/?q=' + m.loc.lat + ',' + m.loc.lon;
@@ -692,6 +792,7 @@ function actsHtml(m){
   const t = m.type || 'text', b = [];
   const add = function(a, ttl, ic){ b.push('<button type="button" data-act="' + a + '" title="' + ttl + '" aria-label="' + ttl + '">' + ic + '</button>'); };
   add('sel', 'Seleccionar', MI.sel);
+  add('reply', 'Responder', MI.reply);
   add('fwd', 'Reenviar', MI.fwd);
   if(t !== 'media' && msgText(m)) add('copy', 'Copiar', MI.copy);
   if(t === 'media' && m.media) add('dl', 'Descargar', MI.dl);
@@ -722,6 +823,7 @@ window.__fcImg = function(){ const el = $('msgs'); if(el && el.__stick) el.scrol
 function openChat(id){
   const c = S.chats[id]; if(!c) return;
   ctxClose(); if(S.sel){ S.sel = null; selBar(); }
+  if(replyTo && replyTo.cid !== id) clearReply();
   S.open = id; document.body.classList.add('conv');
   $('empty').classList.add('hidden'); $('empty').style.display = 'none';
   const cv = $('conv'); cv.classList.remove('hidden'); cv.style.display = 'flex';
@@ -731,13 +833,31 @@ function openChat(id){
 }
 
 /* ---------- acciones ---------- */
+/* [responder] cita de un mensaje: la barra sobre el campo de texto y el envio con la referencia */
+let replyTo = null;
+function setReply(m){
+  const c = S.chats[S.open]; if(!c || !m) return;
+  const t = m.type === 'media' ? ((m.media && m.media.name) || 'Archivo') : m.type === 'loc' ? 'Ubicación' : m.type === 'contact' ? 'Contacto' : String(m.text || '');
+  replyTo = { cid: c.id, id: m.id, txt: t.slice(0, 120), who: m.me ? 'Tú' : (c.group ? (m.who || '') : c.name) };
+  renderReply(); try{ $('txt').focus(); }catch(e){}
+}
+function clearReply(){ replyTo = null; renderReply(); }
+function renderReply(){
+  const b = $('rpBar'); if(!b) return;
+  if(!replyTo){ b.classList.add('hidden'); b.innerHTML = ''; return; }
+  b.classList.remove('hidden');
+  b.innerHTML = '<div class="rp"><b>Respondiendo a ' + esc(replyTo.who || '') + '</b><span>' + esc(replyTo.txt) + '</span></div><button class="iconbtn" id="rpX" title="Cancelar" aria-label="Cancelar" type="button"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+  $('rpX').addEventListener('click', clearReply);
+}
 async function sendText(){
   const c = S.chats[S.open], ta = $('txt'), text = ta.value.replace(/\s+$/, '');
   if(!c || !text) return;
   ta.value = ''; ta.style.height = 'auto';
+  const rp = (replyTo && replyTo.cid === c.id) ? { id: replyTo.id, txt: replyTo.txt, who: replyTo.who } : null; clearReply();
   const tmp = 'tmp' + hex(4), m = { id: tmp, me: true, type: 'text', ts: Date.now(), st: 'sending', text: text };
+  if(rp) m.rp = rp;
   c.msgs.push(m); c.ts = m.ts; renderList(); renderMsgs('force');
-  try{ await send({ t: 'send', cid: c.id, text: text, tmp: tmp }); }
+  try{ await send({ t: 'send', cid: c.id, text: text, tmp: tmp, rp: rp ? { id: rp.id } : undefined }); }
   catch(e){ m.st = 'fail'; renderMsgs(false); return; }
   setTimeout(function(){ if(m.st === 'sending' && c.msgs.indexOf(m) >= 0){ m.st = 'fail'; if(S.open === c.id) renderMsgs(false); } }, 40000);
 }
@@ -892,7 +1012,8 @@ async function endSession(fromPhone){
   if(!fromPhone){ try{ await send({ t: 'bye' }); }catch(e){} }
   try{ rpc('fc_link_close', { p_sid: sid }).catch(function(){}); }catch(e){}
   try{ localStorage.removeItem(SKEY); }catch(e){}
-  S.key = null; S.sid = ''; clearInterval(pingT); clearTimeout(loopT);
+  try{ await idbDel(SKEY); await idbDel('cache'); }catch(e){}
+  S.key = null; S.sid = '';
   location.reload();
 }
 
@@ -908,6 +1029,7 @@ const MI = {
   copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>',
   dl:   '<svg viewBox="0 0 24 24"><path d="M12 4v11"/><polyline points="7 11 12 16 17 11"/><line x1="5" y1="20" x2="19" y2="20"/></svg>',
   fwd:  '<svg viewBox="0 0 24 24"><path d="M4 18v-2a6 6 0 0 1 6-6h9"/><polyline points="15 5 20 10 15 15"/></svg>',
+  reply:'<svg viewBox="0 0 24 24"><path d="M10 5L4 11l6 6"/><path d="M4 11h11a5 5 0 0 1 5 5v3"/></svg>',
   lock: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
   unlock:'<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-1.8"/></svg>',
   emo:  '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14a4.5 4.5 0 0 0 7 0"/><line x1="9" y1="9.5" x2="9" y2="9.6"/><line x1="15" y1="9.5" x2="15" y2="9.6"/></svg>',
@@ -958,6 +1080,7 @@ function ctxOpen(m, x, y){
   items.push({ ic: MI.sel, l: 'Seleccionar', f: function(){ selStart(m.id); } });
   if(m.type !== 'media' && msgText(m)) items.push({ ic: MI.copy, l: 'Copiar', f: function(){ copyText(msgText(m)); } });
   if(m.type === 'media' && m.media) items.push({ ic: MI.dl, l: 'Descargar', f: function(){ downloadMsg(m); } });
+  items.push({ ic: MI.reply, l: 'Responder', f: function(){ doAct('reply', m); } });
   items.push({ ic: MI.fwd, l: 'Reenviar', f: function(){ doAct('fwd', m); } });
   if(navigator.share && (m.type === 'media' || msgText(m))) items.push({ ic: MI.share, l: 'Compartir', f: function(){ shareMsg(m); } });
   if(m.type === 'media' && m.media) items.push({ ic: m.lk ? MI.unlock : MI.lock, l: m.lk ? 'Quitar clave' : 'Poner clave', f: function(){ doAct('lock', m); } });
@@ -1036,18 +1159,48 @@ function fwdMsgs(ids){
   const c = S.chats[S.open]; if(!c) return;
   const ok = ids.filter(function(id){ const m = msgById(id); return m && m.type !== 'sys' && !(m.type === 'media' && m.lk); });
   if(!ok.length){ toast(ids.length ? 'Los archivos con clave no se reenvian.' : 'Nada para reenviar.'); return; }
-  const box = document.createElement('div'); box.className = 'lst';
+  const norm = function(t){ let x = String(t || '').toLowerCase(); try{ x = x.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(e){} return x.trim(); };
+  const box = document.createElement('div');
+  /* [fwdwa] Buscador de contactos (sin acentos ni mayusculas) */
+  const sq = document.createElement('input'); sq.type = 'text'; sq.placeholder = 'Buscar contacto'; sq.autocomplete = 'off';
+  sq.style.marginTop = '0'; sq.style.marginBottom = '8px';
+  box.appendChild(sq);
+  const lst = document.createElement('div'); lst.className = 'lst'; box.appendChild(lst);
+  /* [fwdwa] Primera fila: WhatsApp. Texto, ubicacion y contacto abren wa.me con el mensaje listo. */
+  const wa = document.createElement('div'); wa.className = 'row';
+  wa.innerHTML = '<div class="av"><svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"><path d="M4 20l1.2-4.1A8 8 0 1 1 8.3 18.9z"/><path d="M9.2 8.8c.3 2.6 2.4 4.9 5.2 5.9l1.3-1.3-1.9-1-.9.7a4.6 4.6 0 0 1-1.8-1.8l.7-.9-1-1.9z"/></svg></div><div class="row-mid"><div class="row-name">WhatsApp</div></div>';
+  wa.addEventListener('click', function(){
+    const parts = []; let media = 0;
+    ok.forEach(function(id){
+      const m = msgById(id); if(!m) return;
+      if(m.type === 'media'){ media++; return; }
+      const t = msgText(m); if(t) parts.push(m.type === 'loc' ? 'Ubicación\n' + t : (m.type === 'contact' ? 'Contacto: ' + t : t));
+    });
+    if(!parts.length){ mdlClose(); toast(media ? 'Los archivos no se pueden enviar a WhatsApp desde aquí: descárgalo y compártelo.' : 'Nada para reenviar.'); return; }
+    mdlClose();
+    const txt = parts.join('\n\n') + '\n\n_enviado desde FOCUS° CHAT_';
+    try{ window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank', 'noopener'); }catch(e){ toast('No se pudo abrir WhatsApp.'); return; }
+    if(media) toast('Los archivos se reenvían aparte: descárgalos y compártelos.');
+  });
+  lst.appendChild(wa);
+  const rows = [];
   Object.keys(S.chats).map(function(k){ return S.chats[k]; }).filter(function(x){ return !x.archived; })
     .sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); }).forEach(function(x){
-      const r = document.createElement('div'); r.className = 'row';
+      const r = document.createElement('div'); r.className = 'row'; r.setAttribute('data-n', norm(x.name));
       r.innerHTML = '<div class="av">' + avHtml(x.name, x.photo) + '</div><div class="row-mid"><div class="row-name">' + esc(x.name) + '</div></div>';
       r.addEventListener('click', async function(){
         mdlClose();
         try{ await send({ t: 'fwd', cid: c.id, mids: ok, to: [x.id] }); toast('Reenviando a ' + x.name + '...'); }
         catch(e){ toast('No se pudo reenviar.'); }
       });
-      box.appendChild(r);
+      lst.appendChild(r); rows.push(r);
     });
+  const none = document.createElement('p'); none.textContent = 'Sin resultados'; none.style.display = 'none'; none.style.textAlign = 'center'; lst.appendChild(none);
+  sq.addEventListener('input', function(){
+    const q = norm(sq.value); let n = 0;
+    rows.forEach(function(r){ const show = !q || r.getAttribute('data-n').indexOf(q) >= 0; r.style.display = show ? '' : 'none'; if(show) n++; });
+    none.style.display = (q && !n) ? '' : 'none';
+  });
   mdlOpen('Reenviar a...', box, [{ l: 'Cancelar' }]);
 }
 function delMsgs(ids){
@@ -1122,6 +1275,7 @@ function doAct(a, m){
   else if(a === 'copy') copyText(msgText(m));
   else if(a === 'dl'){ if(m.lk && !(S.media[m.id] && S.media[m.id].url)) toast('Abre el archivo con su clave primero.'); else downloadMsg(m); }
   else if(a === 'share') shareMsg(m);
+  else if(a === 'reply') setReply(m);
   else if(a === 'fwd') fwdMsgs([m.id]);
   else if(a === 'lock') lockMsg(m);
   else if(a === 'emo') emoMsg(m);
@@ -1209,6 +1363,8 @@ function selToggle(el){
       return;
     }
     const b = bub(e.target); if(S.sel && b){ e.preventDefault(); e.stopPropagation(); selToggle(b); return; }
+    const rq = e.target.closest ? e.target.closest('.rp[data-rp]') : null;      // [responder] tocar la cita lleva al mensaje original
+    if(rq){ const el = document.querySelector('.b[data-mid="' + String(rq.getAttribute('data-rp')).replace(/"/g, '') + '"]'); if(el){ el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('selm'); setTimeout(function(){ el.classList.remove('selm'); }, 1200); } return; }
     const ct = e.target.closest ? e.target.closest('.ct') : null;
     if(ct && !S.sel){
       e.preventDefault(); e.stopPropagation();
@@ -1320,11 +1476,12 @@ $('outBtn').addEventListener('click', function(){ if(confirm('¿Cerrar la sesió
 (async function(){
   if(!CFG.url || !CFG.key){ document.body.innerHTML = '<div class="empty" style="height:100%">Falta chat-config.js (url y key del servidor).</div>'; return; }
   if(!window.crypto || !crypto.subtle){ document.body.innerHTML = '<div class="empty" style="height:100%">Este navegador no permite el cifrado. Abre la página con https:// o desde el archivo local.</div>'; return; }
-  let sess = null;
-  try{ sess = JSON.parse(localStorage.getItem(SKEY) || 'null'); }catch(e){}
-  if(sess && /^[0-9a-f]{20}$/.test(sess.sid || '') && sess.k){
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}   // pide que el navegador no borre la sesion
+  const sess = await loadSess();
+  if(sess){
     S.sid = sess.sid; S.k = sess.k; S.ack = Number(sess.ack) || 0;
-    try{ connect(await SUB.importKey('raw', b64d(sess.k), 'AES-GCM', true, ['encrypt', 'decrypt'])); return; }catch(e){}
+    let k0 = null; try{ k0 = await SUB.importKey('raw', b64d(sess.k), 'AES-GCM', true, ['encrypt', 'decrypt']); }catch(e){}
+    if(k0){ saveSess(); await connect(k0); return; }
   }
   showLogin();
 })();
